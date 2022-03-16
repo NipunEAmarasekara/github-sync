@@ -90,7 +90,7 @@ async function backupProcess() {
             let username = repository.owner.login;
             let repo = repository.name;
 
-            Check if the repository exists on codecommit.Create a repository if it doesn't exists.
+            //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
                     if (err.code === 'RepositoryDoesNotExistException') {
