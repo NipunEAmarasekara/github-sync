@@ -97,7 +97,10 @@ async function backupProcess() {
                         } else
                             child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
 
-                        codecommit.createBranch({branchName: repository.default_branch, commitId: crypto.randomBytes(15).toString('hex') ,repositoryName: `${username}_${repo}`})
+                        codecommit.createBranch({branchName: repository.default_branch, commitId: crypto.randomBytes(15).toString('hex') ,repositoryName: `${username}_${repo}`}, function(err, data){
+                            if(err === null)
+                                console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
+                        })
                     }
                 }
             });
@@ -123,16 +126,16 @@ async function backupProcess() {
                         console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
                         //console.log(e);
                     }
-                    if (branch.name == 'main' || branch.name == 'master') {
-                        try {
-                            codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
-                                if(err === null)
-                                    console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
-                            });
-                        } catch (e) {
-                            console.log(e);
-                        }
-                    }
+                    // if (branch.name == 'main' || branch.name == 'master') {
+                    //     try {
+                    //         codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
+                    //             if(err === null)
+                    //                 console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
+                    //         });
+                    //     } catch (e) {
+                    //         console.log(e);
+                    //     }
+                    // }
                 });
             });
             count++;
