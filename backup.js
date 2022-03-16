@@ -121,6 +121,7 @@ async function backupProcess() {
                         //console.log(e);
                     }
                     if(branch.name == 'main' || branch.name == 'master'){
+                        console.log(branch.name);
                         codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data){
                             console.log(err);
                             console.log(data);
