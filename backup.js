@@ -111,17 +111,6 @@ async function backupProcess() {
                         child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
                         child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
                         console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
-                        // if (branch.name == 'main' || branch.name == 'master') {
-                        //     try {
-                        //         codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
-                        //             if (err === null)
-                        //                 console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
-                        //         });
-                        //     } catch (e) {
-                        //         console.log(e);
-                        //     }
-                        // }
-                        // console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                     } catch (e) {
                         child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
                         child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
@@ -131,7 +120,17 @@ async function backupProcess() {
             });
 
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                console.log(data);
+                if (data.repositoryMetadata.defaultBranch !== 'main' || data.repositoryMetadata.defaultBranch !== 'master') {
+                    try {
+                        codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
+                            if (err === null)
+                                console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
+                        });
+                    } catch (e) {
+                        console.log(e);
+                    }
+                    console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
+                }
             });
             count++;
         });
