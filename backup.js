@@ -141,6 +141,8 @@ async function backupProcess() {
                 data.branches.forEach(cb => {
                     if(branches.filter(b => b.name === cb)){
                         console.log(branches.filter(b => b.name === cb));
+                    }else{
+                        console.log(`${cb} gone`);
                     }
                 });
             });
