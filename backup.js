@@ -87,13 +87,13 @@ async function backupProcess() {
 
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
-                    if (err.code === 'RepositoryDoesNotExistException'){
-                        if(repository.description){
-                            if(repository.description != "")
+                    if (err.code === 'RepositoryDoesNotExistException') {
+                        if (repository.description) {
+                            if (repository.description != "")
                                 child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`);
                             else
-                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
-                        }else
+                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
+                        } else
                             child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
                     }
                 }
@@ -120,12 +120,16 @@ async function backupProcess() {
                         console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
                         //console.log(e);
                     }
-                    if(branch.name == 'main' || branch.name == 'master'){
-                        console.log(branch.name);
-                        codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data){
-                            console.log(err);
-                            console.log(data);
-                        });
+                    if (branch.name == 'main' || branch.name == 'master') {
+                        try {
+                            console.log(branch.name);
+                            codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
+                                console.log(err);
+                                console.log(data);
+                            });
+                        } catch (e) {
+                            console.log(e);
+                        }
                     }
                 });
             });
