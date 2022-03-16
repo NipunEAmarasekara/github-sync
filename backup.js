@@ -109,7 +109,7 @@ async function backupProcess() {
                     } catch (e) {
                         child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
                         child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
-                        console.log(e);
+                        //console.log(e);
                     }
                 });
             });
