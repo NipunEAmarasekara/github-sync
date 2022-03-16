@@ -124,12 +124,12 @@ async function backupProcess() {
                     try {
                         codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
                             if (err === null)
-                                console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
+                                console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
                         });
                     } catch (e) {
                         console.log(e);
                     }
-                    console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
+                    console.log(`${repository.name} Repository ${repository.default_branch} Branch Updated\n`);
                 }
             });
             count++;
