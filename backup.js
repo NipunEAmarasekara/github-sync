@@ -109,25 +109,23 @@ async function backupProcess() {
             const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
 
             //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
-            if(fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
+            if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
                 branches.forEach(async branch => {
-                    try {
-                        if (error) {
-                            if (error.code === 'ENOENT') {
-                                child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`);
-                                //console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
-                            }
+                    if (error) {
+                        if (error.code === 'ENOENT') {
+                            child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`);
+                            //console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                         }
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
-                        //console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
-                    } catch (e) {
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
-                        //console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                     }
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
+                    //console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                 });
-            };
+            }else{
+                child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
+                //console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
+            }
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
