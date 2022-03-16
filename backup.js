@@ -120,13 +120,13 @@ async function backupProcess() {
                         console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
                         //console.log(e);
                     }
+                    if(branch.name == 'main' || branch.name == 'master'){
+                        codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data){
+                            console.log(err);
+                            console.log(data);
+                        });
+                    }
                 });
-                if(branch.name == 'main' || branch.name == 'master'){
-                    codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data){
-                        console.log(err);
-                        console.log(data);
-                    });
-                }
             });
             count++;
         });
