@@ -1,4 +1,4 @@
-# github-sync
+# Github-Sync
 Express application to backup github repositories to aws codecommit
 
 # Setup
