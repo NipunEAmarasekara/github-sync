@@ -15,7 +15,7 @@ Express application to backup github repositories to aws codecommit
 
         npm run build
         
-    Set below keys with values as environment variables
+    Set below keys with values as environment variables (check .envExample file)
     
         GITHUB_ACCESS_TOKEN
         LOCAL_BACKUP_PATH
