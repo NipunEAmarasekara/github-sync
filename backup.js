@@ -84,10 +84,7 @@ async function backupProcess() {
         repositories.forEach(async (repository, index) => {
             let username = repository.owner.login;
             let repo = repository.name;
-            const commits = await octokit.rest.repos.listCommits({
-                owner: username,
-                repo: repo,
-            });
+
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
                     if (err.code === 'RepositoryDoesNotExistException') {
@@ -98,13 +95,6 @@ async function backupProcess() {
                                 child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
                         } else
                             child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
-
-                        codecommit.createBranch({branchName: repository.default_branch, commitId: commits.data[0].sha ,repositoryName: `${username}_${repo}`}, function(err, data){
-                            console.log(err);
-                            console.log(data);
-                            // if(err === null)
-                            //     console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
-                        })
                     }
                 }
             });
@@ -115,31 +105,25 @@ async function backupProcess() {
                         if (error) {
                             if (error.code === 'ENOENT') {
                                 child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ~/Downloads/repos/${username}/${repo}`);
-                                child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-                                child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
                                 console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                             }
-                        } else {
-                            child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-                            child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
-                            console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
+                        }
+                        if (branch.name == 'main' || branch.name == 'master') {
+                            try {
+                                codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
+                                    if (err === null)
+                                        console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
+                                });
+                            } catch (e) {
+                                console.log(e);
+                            }
                         }
                     } catch (e) {
-                        child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-                        child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
-                        console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
                         //console.log(e);
                     }
-                    // if (branch.name == 'main' || branch.name == 'master') {
-                    //     try {
-                    //         codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` }, function (err, data) {
-                    //             if(err === null)
-                    //                 console.log(`Default branch set to ${branch.name} in ${username}_${repo}`);
-                    //         });
-                    //     } catch (e) {
-                    //         console.log(e);
-                    //     }
-                    // }
+                    child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                    child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
+                    console.log(`${repo} Repository ${branch.name} Branch Updated\n`);
                 });
             });
             count++;
