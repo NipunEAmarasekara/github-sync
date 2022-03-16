@@ -98,8 +98,10 @@ async function backupProcess() {
                             child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
 
                         codecommit.createBranch({branchName: repository.default_branch, commitId: crypto.randomBytes(15).toString('hex') ,repositoryName: `${username}_${repo}`}, function(err, data){
-                            if(err === null)
-                                console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
+                            console.log(err);
+                            console.log(data);
+                            // if(err === null)
+                            //     console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
                         })
                     }
                 }
