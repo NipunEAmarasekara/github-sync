@@ -141,7 +141,10 @@ async function backupProcess() {
                 data.branches.forEach(cb => {
                     if (!(branches.filter(b => b.name === cb).length > 0)) {
                         codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
-                            console.log(err);
+                            if(err === null)
+                                console.log(`${cb} branch removed from codecommit.`);
+                            else
+                                console.log(err);
                         });
                     }
                 });
