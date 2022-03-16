@@ -120,7 +120,7 @@ async function backupProcess() {
             });
 
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                if (!(data.repositoryMetadata.defaultBranch === 'main' || data.repositoryMetadata.defaultBranch === 'master')) {
+                if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
                     try {
                         codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
                             if (err === null)
