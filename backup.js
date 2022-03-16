@@ -105,12 +105,19 @@ async function backupProcess() {
                         if (error) {
                             if (error.code === 'ENOENT') {
                                 child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ~/Downloads/repos/${username}/${repo}`);
+                                child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                                child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
+                                console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                                 console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                             }
                         }
-                        await updateRepo(repository, branch);
+                        child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                        child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
+                        console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                     } catch (e) {
-                        await updateRepo(repository, branch);
+                        child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
+                        child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
+                        console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                     }
                     if (branch.name == 'main' || branch.name == 'master') {
                         try {
@@ -136,12 +143,6 @@ async function backupProcess() {
     } catch (e) {
         return e;
     }
-}
-
-async function updateRepo(repository, branch){
-    child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
-    child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
-    console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
 }
 
 module.exports.init = async () => {
