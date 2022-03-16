@@ -1,0 +1,6 @@
+#GITHUB_ACCESS_TOKEN=redacted
+
+#Codecommit access info
+#AWS_CC_ACCESS_KEY=redacted
+#AWS_CC_ACCESS_SECRET=redacted
+#AWS_CC_SSH_KEY=redacted

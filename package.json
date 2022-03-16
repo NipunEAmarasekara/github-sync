@@ -1,0 +1,21 @@
+{
+  "name": "github-backup-automation",
+  "version": "1.0.0",
+  "description": "Github auto backup system",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r dotenv/config index.js"
+  },
+  "author": "Nipun Eranda",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^18.12.0",
+    "@supercharge/promise-pool": "^2.1.0",
+    "aws-sdk": "^2.1092.0",
+    "axios": "^0.26.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "nodemon": "^2.0.15",
+    "request": "^2.88.2"
+  }
+}
