@@ -108,9 +108,8 @@ async function backupProcess() {
             //Get repository branches list from the github
             const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
 
-            console.log(fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`));
             //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
-            fs.access(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, function (error) {
+            if(fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
                 branches.forEach(async branch => {
                     try {
                         if (error) {
@@ -128,7 +127,7 @@ async function backupProcess() {
                         //console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
                     }
                 });
-            });
+            };
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
