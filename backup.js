@@ -122,7 +122,6 @@ async function backupProcess() {
                     }
                 });
                 if(branch.name == 'main' || branch.name == 'master'){
-                    console.log('default branch updated');
                     codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` });
                 }
             });
