@@ -10,7 +10,8 @@
   "author": "Nipun Eranda",
   "license": "MIT",
   "pkg": {
-    "assets": [ "node_modules/**/*", "src/**/*" ],
+    "assets": [ "node_modules/**/*"],
+    "scripts": "*.js",
     "targets": [ "node14-macos-x64", "node14-win-x64", "node14-linux-x64" ]
   },
   "dependencies": {
