@@ -138,7 +138,11 @@ async function backupProcess() {
 
             //Remove deleted branches
             codecommit.listBranches({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                console.log(data);
+                data.branches.forEach(cb => {
+                    if(branches.filter(b => b.name === cb)){
+                        console.log(`${cb} exists`);
+                    }
+                });
             });
 
             count++;
