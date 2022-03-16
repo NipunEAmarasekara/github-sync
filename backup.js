@@ -98,6 +98,7 @@ async function backupProcess() {
                         if (error) {
                             if (error.code === 'ENOENT') {
                                 child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ~/Downloads/repos/${username}/${repo}`);
+                                child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
                                 child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
                                 console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                             }
