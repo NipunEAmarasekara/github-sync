@@ -108,9 +108,9 @@ async function backupProcess() {
                                 console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                             }
                         }
-                        await updateRepo(repository, branch);
+                        updateRepo(repository, branch);
                     } catch (e) {
-                        await updateRepo(repository, branch);
+                        updateRepo(repository, branch);
                         //console.log(e);
                     }
                     if (branch.name == 'main' || branch.name == 'master') {
@@ -139,7 +139,7 @@ async function backupProcess() {
     }
 }
 
-async function updateRepo(repository, branch){
+function updateRepo(repository, branch){
     child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
     child_process.execSync(`cd ~/Downloads/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} --all`);
     console.log(`${repository.name} Repository ${branch.name} Branch Updated\n`);
