@@ -135,6 +135,21 @@ async function backupProcess() {
                     }
                 }
             });
+
+            //Remove deleted branches
+            codecommit.listBranches({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                data.branches.forEach(cb => {
+                    if (!(branches.filter(b => b.name === cb).length > 0)) {
+                        codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
+                            if(err === null)
+                                console.log(`${cb} branch removed from codecommit.`);
+                            else
+                                console.log(err);
+                        });
+                    }
+                });
+            });
+
             count++;
         });
 
