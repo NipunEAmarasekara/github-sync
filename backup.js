@@ -140,7 +140,7 @@ async function backupProcess() {
             codecommit.listBranches({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 data.branches.forEach(cb => {
                     if(branches.filter(b => b.name === cb)){
-                        console.log(`${cb} exists`);
+                        console.log(branches.filter(b => b.name === cb));
                     }
                 });
             });
