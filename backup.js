@@ -3,7 +3,6 @@ const child_process = require('child_process');
 const { Octokit } = require("@octokit/rest");
 const aws = require('aws-sdk');
 const fs = require("fs");
-const crypto = require('crypto');
 
 let response = null;
 
@@ -85,7 +84,10 @@ async function backupProcess() {
         repositories.forEach(async (repository, index) => {
             let username = repository.owner.login;
             let repo = repository.name;
-
+            const commits = await octokit.rest.repos.listCommits({
+                owner: username,
+                repo: repo,
+            });
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
                     if (err.code === 'RepositoryDoesNotExistException') {
@@ -97,7 +99,7 @@ async function backupProcess() {
                         } else
                             child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
 
-                        codecommit.createBranch({branchName: repository.default_branch, commitId: crypto.randomBytes(15).toString('hex') ,repositoryName: `${username}_${repo}`}, function(err, data){
+                        codecommit.createBranch({branchName: repository.default_branch, commitId: commits.data[0].sha ,repositoryName: `${username}_${repo}`}, function(err, data){
                             console.log(err);
                             console.log(data);
                             // if(err === null)
