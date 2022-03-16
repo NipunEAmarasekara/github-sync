@@ -108,9 +108,10 @@ async function backupProcess() {
             //Get repository branches list from the github
             const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
 
-            branches.forEach(async branch => {
-                //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
-                fs.access(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, function (error) {
+            console.log(fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`));
+            //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
+            fs.access(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, function (error) {
+                branches.forEach(async branch => {
                     try {
                         if (error) {
                             if (error.code === 'ENOENT') {
