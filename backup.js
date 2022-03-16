@@ -6,13 +6,16 @@ const fs = require("fs");
 
 let response = null;
 
+//Initialize github api
 const octokit = new Octokit({
     auth: config.GITHUB_ACCESS_TOKEN,
 });
 
+//Initialize aws and codecommit
 aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
 var codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
 
+//Get organizations list from github
 async function getOrganizations() {
     try {
         const organizations = await octokit.rest.orgs.listForAuthenticatedUser();
@@ -30,6 +33,7 @@ async function getOrganizations() {
     }
 }
 
+//Get repositories for each organization from github
 async function getRepoList() {
     let repos = [];
     try {
@@ -76,6 +80,7 @@ async function getRepoList() {
     }
 }
 
+//Github to Codecommit backup process
 async function backupProcess() {
     try {
         console.log('####################### Started Github Backup Process #######################\n');
@@ -85,6 +90,7 @@ async function backupProcess() {
             let username = repository.owner.login;
             let repo = repository.name;
 
+            //Check if the repository exists on codecommit. Create a repository if it doesn't exists.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
                     if (err.code === 'RepositoryDoesNotExistException') {
@@ -98,8 +104,12 @@ async function backupProcess() {
                     }
                 }
             });
+
+            //Get repository branches list from the github
             const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
+
             branches.forEach(async branch => {
+                //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
                 fs.access(`~/Downloads/repos/${username}/${repo}`, function (error) {
                     try {
                         if (error) {
@@ -119,6 +129,7 @@ async function backupProcess() {
                 });
             });
 
+            //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
                     try {
@@ -133,6 +144,8 @@ async function backupProcess() {
             });
             count++;
         });
+
+        //Wait until the end of the backup process
         const interval = setInterval(function () {
             if (count === repositories.length) {
                 console.log('\n####################### Completed Github Backup Process #######################\n');
