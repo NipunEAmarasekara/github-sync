@@ -14,3 +14,11 @@ Express application to backup github repositories to aws codecommit
     Export executable for mac, linux and windows
 
         npm run build
+        
+    Set below keys with values as environment variables
+    
+        GITHUB_ACCESS_TOKEN
+        LOCAL_BACKUP_PATH
+        AWS_CC_ACCESS_KEY
+        AWS_CC_ACCESS_SECRET
+        AWS_CC_SSH_KEY
