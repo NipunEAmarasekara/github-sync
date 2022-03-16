@@ -1,5 +1,8 @@
 #GITHUB_ACCESS_TOKEN=redacted
 
+#Local backup path
+#LOCAL_BACKUP_PATH=redacted
+
 #Codecommit access info
 #AWS_CC_ACCESS_KEY=redacted
 #AWS_CC_ACCESS_SECRET=redacted
