@@ -87,8 +87,15 @@ async function backupProcess() {
 
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (err) {
-                    if (err.code === 'RepositoryDoesNotExistException')
-                        child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`);
+                    if (err.code === 'RepositoryDoesNotExistException'){
+                        if(repository.description){
+                            if(repository.description != "")
+                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`);
+                            else
+                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
+                        }else
+                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`);
+                    }
                 }
             });
             const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
@@ -100,6 +107,8 @@ async function backupProcess() {
                                 child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ~/Downloads/repos/${username}/${repo}`);
                                 child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`);
                                 child_process.execSync(`cd ~/Downloads/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} --all`);
+                                if(branch.name === 'main' || branch.name === 'master')
+                                    codecommit.updateDefaultBranch({ defaultBranchName: branch.name, repositoryName: `${username}_${repo}` });
                                 console.log(`\n${repo} Repository ${branch.name} Branch Cloned\n`);
                             }
                         } else {
