@@ -111,7 +111,7 @@ async function backupProcess() {
             branches.forEach(async branch => {
                 //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
                 console.log(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`);
-                console.log(!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`));
+                console.log(fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`));
                 fs.access(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, function (error) {
                     try {
                         if (error) {
