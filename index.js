@@ -6,7 +6,7 @@ const port = 8080
 
 
 const server = app.listen(port, async () => {
-  console.log(`Automatic github backup process is started`);
+  console.log(`Schedular started at ${new Date().toLocaleString()}`);
   cron.schedule('* * * * *', async function () {
     await backup.init();
   });
