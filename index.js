@@ -6,8 +6,8 @@ const port = 8080
 
 
 const server = app.listen(port, async () => {
-  console.log(`Schedular started at ${new Date().toLocaleString()}`);
   cron.schedule('* * * * *', async function () {
+    console.log(`Schedular started at ${new Date().toLocaleString()}`);
     await backup.init();
   });
 
