@@ -11,9 +11,15 @@
   "author": "Nipun Eranda",
   "license": "MIT",
   "pkg": {
-    "assets": [ "node_modules/**/*"],
+    "assets": [
+      "node_modules/**/*"
+    ],
     "scripts": "*.js",
-    "targets": [ "node14-macos-x64", "node14-win-x64", "node14-linux-x64" ],
+    "targets": [
+      "node14-macos-x64",
+      "node14-win-x64",
+      "node14-linux-x64"
+    ],
     "outputPath": "dist"
   },
   "dependencies": {
@@ -23,6 +29,7 @@
     "axios": "^0.26.1",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "node-cron": "^3.0.0",
     "nodemon": "^2.0.15",
     "request": "^2.88.2"
   }
