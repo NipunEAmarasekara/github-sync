@@ -10,7 +10,6 @@ const server = app.listen(port, async () => {
   //Check for arguments
   if (process.argv.slice(2).filter(arg => arg === 'onetime').length) {
     await backup.init();
-    await backup.init();
     process.on('SIGTERM', () => {
       server.close();
     });
