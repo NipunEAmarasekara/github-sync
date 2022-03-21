@@ -6,11 +6,16 @@ const port = 8080
 
 
 const server = app.listen(port, async () => {
-  //Time format -> min hour day-of-month month day-of-week
-  cron.schedule('0 0 * * *', async function () {
-    console.log(`Schedular started at ${new Date().toLocaleString()}`);
+  //Check for arguments
+  if (process.argv.slice(2).filter(arg => arg === 'onetime').length) {
     await backup.init();
-  });
+  } else {
+    //Time format -> min hour day-of-month month day-of-week
+    cron.schedule('0 0 * * *', async function () {
+      console.log(`Schedular started at ${new Date().toLocaleString()}`);
+      await backup.init();
+    });
+  }
 
   // process.on('SIGTERM', () => {
   //   server.close();
