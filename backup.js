@@ -12,8 +12,8 @@ const octokit = new Octokit({
 });
 
 //Initialize aws and codecommit
-aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
-var codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
+//aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
+//var codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
 
 //Get organizations list from github
 async function getOrganizations() {
