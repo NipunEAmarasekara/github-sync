@@ -9,6 +9,12 @@ const server = app.listen(port, async () => {
   //Check for arguments
   if (process.argv.slice(2).filter(arg => arg === 'onetime').length) {
     await backup.init();
+
+    process.on('SIGTERM', () => {
+      server.close();
+    });
+  
+    process.kill(process.pid, 'SIGTERM')
   } else {
     //Time format -> min hour day-of-month month day-of-week
     cron.schedule('0 0 * * *', async function () {
@@ -16,10 +22,4 @@ const server = app.listen(port, async () => {
       await backup.init();
     });
   }
-
-  // process.on('SIGTERM', () => {
-  //   server.close();
-  // });
-
-  // process.kill(process.pid, 'SIGTERM')
 });
