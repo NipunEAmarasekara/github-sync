@@ -6,7 +6,8 @@ const port = 8080
 
 
 const server = app.listen(port, async () => {
-  cron.schedule('* * * * *', async function () {
+  //Time format -> min hour day-of-month month day-of-week
+  cron.schedule('0 0 * * *', async function () {
     console.log(`Schedular started at ${new Date().toLocaleString()}`);
     await backup.init();
   });
