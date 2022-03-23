@@ -205,5 +205,6 @@ async function copyReposToS3(repo) {
 
 module.exports.init = async (m) => {
     mod = m;
+    console.log(m);
     await backupProcess();
 };
