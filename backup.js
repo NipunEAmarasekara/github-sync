@@ -179,23 +179,23 @@ function copyReposToS3(repos) {
 
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(repo => {
-      const passThroughStream = new stream.PassThrough()
+      const passThroughStream = new stream.PassThrough();
       const arhiveURL =
         "https://api.github.com/repos/" +
         repo.full_name +
         "/tarball/master?access_token=" +
-        config.GITHUB_ACCESS_TOKEN
+        config.GITHUB_ACCESS_TOKEN;
       const requestOptions = {
         url: arhiveURL,
         headers: {
           "User-Agent": "nodejs"
         }
-      }
+      };
 
       request(requestOptions).pipe(passThroughStream)
-
-      const bucketName = config.AWS_S3_BUCKET_NAME
-      const objectName = date + "/" + repo.full_name + ".tar.gz"
+      console.log(config.AWS_S3_BUCKET_NAME);
+      const bucketName = config.AWS_S3_BUCKET_NAME;
+      const objectName = date + "/" + repo.full_name + ".tar.gz";
       const params = {
         Bucket: bucketName,
         Key: objectName,
