@@ -170,46 +170,45 @@ async function backupProcess() {
 }
 
 function copyReposToS3(repos) {
-    console.log(repos);
-    // console.log("Found " + repos.length + " repos to backup")
-    // console.log("-------------------------------------------------")
+    console.log("Found " + repos.length + " repos to backup")
+    console.log("-------------------------------------------------")
 
-    // const date = new Date().toISOString();
+    const date = new Date().toISOString();
 
-    // const uploader = Promise.promisify(s3.upload.bind(s3))
-    // const tasks = repos.map(repo => {
-    //   const passThroughStream = new stream.PassThrough()
-    //   const arhiveURL =
-    //     "https://api.github.com/repos/" +
-    //     repo.full_name +
-    //     "/tarball/master?access_token=" +
-    //     config.GITHUB_ACCESS_TOKEN
-    //   const requestOptions = {
-    //     url: arhiveURL,
-    //     headers: {
-    //       "User-Agent": "nodejs"
-    //     }
-    //   }
+    const uploader = Promise.promisify(s3.upload.bind(s3))
+    const tasks = repos.map(repo => {
+      const passThroughStream = new stream.PassThrough()
+      const arhiveURL =
+        "https://api.github.com/repos/" +
+        repo.full_name +
+        "/tarball/master?access_token=" +
+        config.GITHUB_ACCESS_TOKEN
+      const requestOptions = {
+        url: arhiveURL,
+        headers: {
+          "User-Agent": "nodejs"
+        }
+      }
 
-    //   request(requestOptions).pipe(passThroughStream)
+      request(requestOptions).pipe(passThroughStream)
 
-    //   const bucketName = config.AWS_S3_BUCKET_NAME
-    //   const objectName = date + "/" + repo.full_name + ".tar.gz"
-    //   const params = {
-    //     Bucket: bucketName,
-    //     Key: objectName,
-    //     Body: passThroughStream,
-    //     //StorageClass: options.s3StorageClass || "STANDARD",
-    //     StorageClass: "STANDARD",
-    //     ServerSideEncryption: "AES256"
-    //   }
+      const bucketName = config.AWS_S3_BUCKET_NAME
+      const objectName = date + "/" + repo.full_name + ".tar.gz"
+      const params = {
+        Bucket: bucketName,
+        Key: objectName,
+        Body: passThroughStream,
+        //StorageClass: options.s3StorageClass || "STANDARD",
+        StorageClass: "STANDARD",
+        ServerSideEncryption: "AES256"
+      }
 
-    //   return uploader(params).then(result => {
-    //     console.log("[✓] " + repo.full_name + ".git - backed up")
-    //   })
-    // })
+      return uploader(params).then(result => {
+        console.log("[✓] " + repo.full_name + ".git - backed up")
+      })
+    })
 
-    // return Promise.all(tasks)
+    return Promise.all(tasks)
   }
 
 module.exports.init = async () => {
