@@ -8,6 +8,7 @@ const request = require("request");
 const Promise = require("bluebird");
 
 let response = null;
+let s3Synced = false;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -87,6 +88,7 @@ async function getRepoList() {
 //Github to Codecommit backup process
 async function backupProcess() {
     try {
+        s3Synced = false;
         console.log('####################### Started Github Backup Process #######################\n');
         const repositories = await getRepoList();
         let count = 0;
@@ -157,11 +159,12 @@ async function backupProcess() {
             count++;
         });
 
+        copyReposToS3(repositories);
+
         //Wait until the end of the backup process
         const interval = setInterval(function () {
-            if (count === repositories.length) {
+            if (count === repositories.length && s3Synced) {
                 console.log('\n####################### Completed Github Backup Process #######################\n');
-                copyReposToS3(repositories);
                 clearInterval(interval);
                 return null;
             }
@@ -172,9 +175,6 @@ async function backupProcess() {
 }
 
 function copyReposToS3(repos) {
-    console.log("Found " + repos.length + " repos to backup")
-    console.log("-------------------------------------------------")
-
     const date = new Date().toISOString();
 
     const uploader = Promise.promisify(s3.upload.bind(s3))
@@ -210,6 +210,7 @@ function copyReposToS3(repos) {
       })
     })
 
+    s3Synced = true;
     return Promise.all(tasks)
   }
 
