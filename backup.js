@@ -189,7 +189,8 @@ async function copyReposToS3(repo) {
         const requestOptions = {
             url: arhiveURL,
             headers: {
-                "User-Agent": "nodejs"
+                "User-Agent": "nodejs",
+                "Authorization": config.GITHUB_ACCESS_TOKEN,
             }
         };
 
