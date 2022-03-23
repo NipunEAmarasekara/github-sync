@@ -6,6 +6,7 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
+const StreamZip = require('node-stream-zip');
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -181,19 +182,25 @@ async function copyReposToS3(repo) {
         // const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
         // child_process.execSync(command, options);
         // console.log(`[✓] Repositories synced to s3.\n`);
-        const uploader = Promise.promisify(s3.upload.bind(s3));
-        const passThroughStream = new stream.PassThrough();
-        const arhiveURL =
-            "https://api.github.com/repos/" +
-            repo.full_name +
-            "/tarball/master?access_token=" +
-            config.GITHUB_ACCESS_TOKEN;
-        const requestOptions = {
-            url: arhiveURL,
-            headers: {
-                "User-Agent": "nodejs"
-            }
-        };
+        // const uploader = Promise.promisify(s3.upload.bind(s3));
+        // const passThroughStream = new stream.PassThrough();
+        // const arhiveURL =
+        //     "https://api.github.com/repos/" +
+        //     repo.full_name +
+        //     "/tarball/master?access_token=" +
+        //     config.GITHUB_ACCESS_TOKEN;
+        // const requestOptions = {
+        //     url: arhiveURL,
+        //     headers: {
+        //         "User-Agent": "nodejs"
+        //     }
+        // };
+
+        child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`, options);
+        const zip = new StreamZip({
+            file: `${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}.zip`,
+            storeEntries: true
+        });
 
         request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
@@ -201,7 +208,7 @@ async function copyReposToS3(repo) {
         const params = {
             Bucket: bucketName,
             Key: objectName,
-            Body: passThroughStream,
+            Body: zip,
             //StorageClass: options.s3StorageClass || "STANDARD",
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
