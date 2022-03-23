@@ -127,7 +127,7 @@ async function backupProcess() {
             });
 
             if (mode === 's3' || mode === undefined)
-                await copyReposToS3(repository);
+                await copyReposToS3(repository, index, repositories.length);
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
@@ -177,9 +177,9 @@ async function backupProcess() {
     }
 }
 
-async function copyReposToS3(repo) {
+async function copyReposToS3(repo, index, repositoryCount) {
     try {
-        console.log(repo.name);
+        console.log(`${repo.name} : ${index}/${repositoryCount}`);
         const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
@@ -191,8 +191,16 @@ async function copyReposToS3(repo) {
                 "Authorization": `token ${config.GITHUB_ACCESS_TOKEN}`,
             }
         };
-
-        request(requestOptions).pipe(passThroughStream);
+        await new Promise((resolve, reject) => {
+            request(requestOptions, function (error, response, body) {
+                if (error) {
+                    reject(error);
+                    throw new Error(error);
+                }
+                console.log(body);
+                resolve("done");
+            }).pipe(passThroughStream);
+        });
         const bucketName = config.AWS_S3_BUCKET_NAME;
         const objectName = repo.full_name + ".zip";
         const params = {
