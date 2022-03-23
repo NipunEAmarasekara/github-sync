@@ -173,6 +173,7 @@ async function backupProcess() {
 }
 
 async function copyReposToS3(repos) {
+    console.log('s3 backup');
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(async repo => {
         const passThroughStream = new stream.PassThrough();
