@@ -157,7 +157,7 @@ async function backupProcess() {
             count++;
         });
 
-        copyReposToS3(repositories);
+        await copyReposToS3(repositories);
 
         //Wait until the end of the backup process
         const interval = setInterval(function () {
@@ -172,10 +172,9 @@ async function backupProcess() {
     }
 }
 
-function copyReposToS3(repos) {
-    console.log('\n#######################   Github to S3 Backup Process   #######################\n');
+async function copyReposToS3(repos) {
     const uploader = Promise.promisify(s3.upload.bind(s3))
-    const tasks = repos.map(repo => {
+    const tasks = repos.map(async repo => {
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
             "https://api.github.com/repos/" +
@@ -204,7 +203,7 @@ function copyReposToS3(repos) {
         return uploader(params).then(result => {
             console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
         })
-    })
+    });
 
     s3Synced = true;
     return Promise.all(tasks)
