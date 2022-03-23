@@ -91,6 +91,7 @@ async function backupProcess() {
         const repositories = await getRepoList();
         let count = 0;
         repositories.forEach(async (repository, index) => {
+            console.log(repository);
             let username = repository.owner.login;
             let repo = repository.name;
 
