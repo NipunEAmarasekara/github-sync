@@ -178,35 +178,39 @@ async function backupProcess() {
 }
 
 async function copyReposToS3(repo) {
-    const uploader = Promise.promisify(s3.upload.bind(s3))
-    const passThroughStream = new stream.PassThrough();
-    const arhiveURL =
-        "https://api.github.com/repos/" +
-        repo.full_name +
-        "/tarball/master?access_token=" +
-        config.GITHUB_ACCESS_TOKEN;
-    const requestOptions = {
-        url: arhiveURL,
-        headers: {
-            "User-Agent": "nodejs"
+    try {
+        const uploader = Promise.promisify(s3.upload.bind(s3))
+        const passThroughStream = new stream.PassThrough();
+        const arhiveURL =
+            "https://api.github.com/repos/" +
+            repo.full_name +
+            "/tarball/master?access_token=" +
+            config.GITHUB_ACCESS_TOKEN;
+        const requestOptions = {
+            url: arhiveURL,
+            headers: {
+                "User-Agent": "nodejs"
+            }
+        };
+
+        request(requestOptions).pipe(passThroughStream)
+        const bucketName = config.AWS_S3_BUCKET_NAME;
+        const objectName = repo.full_name + ".tar.gz";
+        const params = {
+            Bucket: bucketName,
+            Key: objectName,
+            Body: passThroughStream,
+            //StorageClass: options.s3StorageClass || "STANDARD",
+            StorageClass: "STANDARD",
+            ServerSideEncryption: "AES256"
         }
-    };
 
-    request(requestOptions).pipe(passThroughStream)
-    const bucketName = config.AWS_S3_BUCKET_NAME;
-    const objectName = repo.full_name + ".tar.gz";
-    const params = {
-        Bucket: bucketName,
-        Key: objectName,
-        Body: passThroughStream,
-        //StorageClass: options.s3StorageClass || "STANDARD",
-        StorageClass: "STANDARD",
-        ServerSideEncryption: "AES256"
+        return uploader(params).then(result => {
+            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
+        });
+    } catch (e) {
+        console.log(e);
     }
-
-    return uploader(params).then(result => {
-        console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-    });
 }
 
 module.exports.init = async (m) => {
