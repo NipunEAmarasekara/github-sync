@@ -182,10 +182,7 @@ async function copyReposToS3(repo) {
         const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
-            "https://api.github.com/repos/" +
-            repo.full_name +
-            "/zipball/*?access_token=" +
-            config.GITHUB_ACCESS_TOKEN;
+            `https://api.github.com/repos/${repo.full_name}/zipball/${repo.default_branch}?access_token=${config.GITHUB_ACCESS_TOKEN}`;
         const requestOptions = {
             url: arhiveURL,
             headers: {
