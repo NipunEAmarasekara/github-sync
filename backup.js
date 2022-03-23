@@ -8,6 +8,7 @@ const request = require("request");
 const Promise = require("bluebird");
 
 let s3Synced = false;
+let options = {stdio : 'pipe' };
 
 //Initialize github api
 const octokit = new Octokit({
@@ -101,11 +102,11 @@ async function backupProcess() {
                     if (err.code === 'RepositoryDoesNotExistException') {
                         if (repository.description) {
                             if (repository.description != "")
-                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}" &> /dev/null &`);
+                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
                             else
-                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} &> /dev/null &`);
+                                child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
                         } else
-                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} &> /dev/null &`);
+                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
                     }
                 }
             });
@@ -116,12 +117,12 @@ async function backupProcess() {
             branches.forEach(async branch => {
                 //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
                 if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
-                    child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} &> /dev/null &`);
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name} &> /dev/null &`);
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name} &> /dev/null &`);
+                    child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 } else {
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name} &> /dev/null &`);
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name} &> /dev/null &`);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 }
             });
 
