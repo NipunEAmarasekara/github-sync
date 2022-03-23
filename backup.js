@@ -157,7 +157,7 @@ async function backupProcess() {
             count++;
         });
 
-        await copyReposToS3(repositories);
+        copyReposToS3(repositories);
 
         //Wait until the end of the backup process
         const interval = setInterval(function () {
@@ -172,7 +172,8 @@ async function backupProcess() {
     }
 }
 
-async function copyReposToS3(repos) {
+function copyReposToS3(repos) {
+    console.log('\n#######################   Github to S3 Backup Process   #######################\n');
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(repo => {
         const passThroughStream = new stream.PassThrough();
