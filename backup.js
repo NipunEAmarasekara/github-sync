@@ -89,7 +89,8 @@ async function getRepoList() {
 async function backupProcess() {
     try {
         s3Synced = false;
-        console.log('####################### Started Github Backup Process #######################\n');
+        console.log('\n####################### Started Github Backup Process #######################\n');
+        console.log('\n-----------------------   CodeCommit Backup Process   -----------------------\n');
         const repositories = await getRepoList();
         let count = 0;
         repositories.forEach(async (repository, index) => {
@@ -175,8 +176,7 @@ async function backupProcess() {
 }
 
 async function copyReposToS3(repos) {
-    const date = new Date().toISOString();
-
+    console.log('\n-----------------------       S3 Backup Process       -----------------------\n');
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(repo => {
       const passThroughStream = new stream.PassThrough();
