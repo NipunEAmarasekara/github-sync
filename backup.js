@@ -3,7 +3,9 @@ const child_process = require('child_process');
 const { Octokit } = require("@octokit/rest");
 const aws = require('aws-sdk');
 const fs = require("fs");
-const { copy } = require('request/lib/helpers');
+const stream = require("stream");
+const request = require("request");
+const Promise = require("bluebird");
 
 let response = null;
 
