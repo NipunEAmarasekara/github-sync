@@ -87,7 +87,7 @@ async function backupProcess() {
     try {
         console.log('\n####################### Started Github Backup Process #######################\n');
         let repositories = await getRepoList();
-        repositories = repositories.sort((a,b) => a.size - b.size);
+        repositories = repositories.sort((a,b) => b.size - a.size);
         let count = 0;
         repositories.forEach(async (repository, index) => {
             let username = repository.owner.login;
