@@ -182,7 +182,7 @@ async function copyReposToS3(repo) {
         // const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
         // child_process.execSync(command, options);
         // console.log(`[✓] Repositories synced to s3.\n`);
-        
+
         const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
@@ -209,7 +209,7 @@ async function copyReposToS3(repo) {
         const params = {
             Bucket: bucketName,
             Key: objectName,
-            Body: zip,
+            Body:  Buffer.from(zip, "binary"),
             //StorageClass: options.s3StorageClass || "STANDARD",
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
