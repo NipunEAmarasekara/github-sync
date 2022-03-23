@@ -7,4 +7,7 @@ config.AWS_CC_ACCESS_SECRET = process.env.AWS_CC_ACCESS_SECRET;
 
 config.LOCAL_BACKUP_PATH = process.env.LOCAL_BACKUP_PATH;
 
+config.AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+config.AWS_S3_STORAGE_CLASS = process.env.AWS_S3_STORAGE_CLASS;
+
 module.exports = config;
