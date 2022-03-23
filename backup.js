@@ -6,7 +6,7 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
-const StreamZip = require('node-stream-zip');
+const AdmZip = require('adm-zip');
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -198,10 +198,7 @@ async function copyReposToS3(repo) {
         };
 
         child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-        const zip = new StreamZip({
-            file: `${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`,
-            storeEntries: true
-        });
+        const zip = new AdmZip(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`);
 
         //request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
@@ -209,7 +206,7 @@ async function copyReposToS3(repo) {
         const params = {
             Bucket: bucketName,
             Key: objectName,
-            Body:  Buffer.from(zip, "binary"),
+            Body:  zip,
             //StorageClass: options.s3StorageClass || "STANDARD",
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
