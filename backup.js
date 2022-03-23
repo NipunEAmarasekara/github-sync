@@ -6,7 +6,6 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
-const AdmZip = require('adm-zip');
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -127,6 +126,9 @@ async function backupProcess() {
                 }
             });
 
+            if (mode === 's3' || mode === undefined)
+                await copyReposToS3(repository);
+
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
@@ -159,8 +161,6 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            if (mode === 's3' || mode === undefined)
-                await copyReposToS3(repository);
             count++;
         });
 
@@ -177,49 +177,52 @@ async function backupProcess() {
     }
 }
 
+// async function copyReposToS3(repo) {
+//     try {
+//         const uploader = Promise.promisify(s3.upload.bind(s3));
+//         const passThroughStream = new stream.PassThrough();
+//         const arhiveURL =
+//             "https://api.github.com/repos/" +
+//             repo.full_name +
+//             "/tarball/master?access_token=" +
+//             config.GITHUB_ACCESS_TOKEN;
+//         const requestOptions = {
+//             url: arhiveURL,
+//             headers: {
+//                 "User-Agent": "nodejs"
+//             }
+//         };
+
+//         request(requestOptions).pipe(passThroughStream);
+//         const bucketName = config.AWS_S3_BUCKET_NAME;
+//         const objectName = repo.full_name + ".tar.gz";
+//         const params = {
+//             Bucket: bucketName,
+//             Key: objectName,
+//             Body: passThroughStream,
+//             //StorageClass: options.s3StorageClass || "STANDARD",
+//             StorageClass: "STANDARD",
+//             ServerSideEncryption: "AES256"
+//         };
+
+//         return uploader(params).then(result => {
+//             console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
+//         });
+//     } catch (e) {
+//         console.log(e);
+//     }
+// }
+
 async function copyReposToS3(repo) {
     try {
-        // const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
-        // child_process.execSync(command, options);
-        // console.log(`[✓] Repositories synced to s3.\n`);
-
-        const uploader = Promise.promisify(s3.upload.bind(s3));
-        const passThroughStream = new stream.PassThrough();
-        const arhiveURL =
-            "https://api.github.com/repos/" +
-            repo.full_name +
-            "/tarball/master?access_token=" +
-            config.GITHUB_ACCESS_TOKEN;
-        const requestOptions = {
-            url: arhiveURL,
-            headers: {
-                "User-Agent": "nodejs"
-            }
-        };
-
         child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-        const zip = new AdmZip(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`);
-
-        //request(requestOptions).pipe(passThroughStream);
-        const bucketName = config.AWS_S3_BUCKET_NAME;
-        const objectName = repo.full_name + ".tar.gz";
-        const params = {
-            Bucket: bucketName,
-            Key: objectName,
-            Body:  Buffer.from(zip, "binary"),
-            //StorageClass: options.s3StorageClass || "STANDARD",
-            StorageClass: "STANDARD",
-            ServerSideEncryption: "AES256"
-        };
-
-        return uploader(params).then(result => {
-            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-        });
+        const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip s3://${config.AWS_S3_BUCKET_NAME}`;
+        child_process.execSync(command, options);
+        console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`);
     } catch (e) {
         console.log(e);
     }
 }
-
 
 module.exports.init = async (m) => {
     mode = m;
