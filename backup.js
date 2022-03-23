@@ -184,7 +184,7 @@ async function copyReposToS3(repo) {
         const arhiveURL =
             "https://api.github.com/repos/" +
             repo.full_name +
-            "/zipball/main?access_token=" +
+            "/zipball/*?access_token=" +
             config.GITHUB_ACCESS_TOKEN;
         const requestOptions = {
             url: arhiveURL,
