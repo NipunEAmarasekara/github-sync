@@ -182,19 +182,20 @@ async function copyReposToS3(repo) {
         // const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
         // child_process.execSync(command, options);
         // console.log(`[✓] Repositories synced to s3.\n`);
-        // const uploader = Promise.promisify(s3.upload.bind(s3));
-        // const passThroughStream = new stream.PassThrough();
-        // const arhiveURL =
-        //     "https://api.github.com/repos/" +
-        //     repo.full_name +
-        //     "/tarball/master?access_token=" +
-        //     config.GITHUB_ACCESS_TOKEN;
-        // const requestOptions = {
-        //     url: arhiveURL,
-        //     headers: {
-        //         "User-Agent": "nodejs"
-        //     }
-        // };
+        
+        const uploader = Promise.promisify(s3.upload.bind(s3));
+        const passThroughStream = new stream.PassThrough();
+        const arhiveURL =
+            "https://api.github.com/repos/" +
+            repo.full_name +
+            "/tarball/master?access_token=" +
+            config.GITHUB_ACCESS_TOKEN;
+        const requestOptions = {
+            url: arhiveURL,
+            headers: {
+                "User-Agent": "nodejs"
+            }
+        };
 
         child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
         const zip = new StreamZip({
