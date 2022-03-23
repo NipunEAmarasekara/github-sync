@@ -8,6 +8,7 @@ const request = require("request");
 const Promise = require("bluebird");
 
 let options = { stdio: 'pipe' };
+let mod = null;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -91,7 +92,6 @@ async function backupProcess() {
         const repositories = await getRepoList();
         let count = 0;
         repositories.forEach(async (repository, index) => {
-            console.log(repository);
             let username = repository.owner.login;
             let repo = repository.name;
 
@@ -203,6 +203,7 @@ async function copyReposToS3(repo) {
         });
 }
 
-module.exports.init = async () => {
+module.exports.init = async (m) => {
+    mod = m;
     await backupProcess();
 };
