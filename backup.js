@@ -216,7 +216,7 @@ async function backupProcess() {
 async function copyReposToS3(repo) {
     try {
         child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-        const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip s3://${config.AWS_S3_BUCKET_NAME}`;
+        const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login} s3://${config.AWS_S3_BUCKET_NAME}`;
         child_process.execSync(command, options);
         console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`);
     } catch (e) {
