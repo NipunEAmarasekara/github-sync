@@ -179,7 +179,7 @@ async function backupProcess() {
 
 async function copyReposToS3(repo) {
     try {
-        const uploader = Promise.promisify(s3.upload.bind(s3))
+        const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
             "https://api.github.com/repos/" +
@@ -193,8 +193,7 @@ async function copyReposToS3(repo) {
             }
         };
 
-        request(requestOptions).pipe(passThroughStream)
-        console.log(config.AWS_S3_BUCKET_NAME);
+        request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
         const objectName = repo.full_name + ".tar.gz";
         const params = {
@@ -204,7 +203,7 @@ async function copyReposToS3(repo) {
             //StorageClass: options.s3StorageClass || "STANDARD",
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
-        }
+        };
 
         return uploader(params).then(result => {
             console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
