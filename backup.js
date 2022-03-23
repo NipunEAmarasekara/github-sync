@@ -86,10 +86,11 @@ async function getRepoList() {
 async function backupProcess() {
     try {
         console.log('\n####################### Started Github Backup Process #######################\n');
-        const repositories = await getRepoList();
+        let repositories = await getRepoList();
+        repositories = repositories.sort((a,b) => a.size - b.size);
         let count = 0;
         repositories.forEach(async (repository, index) => {
-            let username = repository.owner.login;
+            let username = repository.owner.login;Ï
             let repo = repository.name;
 
             //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
