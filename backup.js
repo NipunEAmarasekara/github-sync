@@ -8,7 +8,7 @@ const request = require("request");
 const Promise = require("bluebird");
 
 let s3Synced = false;
-let options = {stdio : 'pipe' };
+let options = { stdio: 'pipe' };
 
 //Initialize github api
 const octokit = new Octokit({
@@ -145,7 +145,7 @@ async function backupProcess() {
                 data.branches.forEach(cb => {
                     if (!(branches.filter(b => b.name === cb).length > 0)) {
                         codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
-                            if(err === null)
+                            if (err === null)
                                 console.log(`${cb} branch removed from codecommit.`);
                             else
                                 console.log(err);
@@ -175,39 +175,40 @@ async function backupProcess() {
 async function copyReposToS3(repos) {
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(repo => {
-      const passThroughStream = new stream.PassThrough();
-      const arhiveURL =
-        "https://api.github.com/repos/" +
-        repo.full_name +
-        "/tarball/master?access_token=" +
-        config.GITHUB_ACCESS_TOKEN;
-      const requestOptions = {
-        url: arhiveURL,
-        headers: {
-          "User-Agent": "nodejs"
+        console.log(repo);
+        const passThroughStream = new stream.PassThrough();
+        const arhiveURL =
+            "https://api.github.com/repos/" +
+            repo.full_name +
+            "/tarball/master?access_token=" +
+            config.GITHUB_ACCESS_TOKEN;
+        const requestOptions = {
+            url: arhiveURL,
+            headers: {
+                "User-Agent": "nodejs"
+            }
+        };
+
+        request(requestOptions).pipe(passThroughStream)
+        const bucketName = config.AWS_S3_BUCKET_NAME;
+        const objectName = repo.full_name + ".tar.gz";
+        const params = {
+            Bucket: bucketName,
+            Key: objectName,
+            Body: passThroughStream,
+            //StorageClass: options.s3StorageClass || "STANDARD",
+            StorageClass: "STANDARD",
+            ServerSideEncryption: "AES256"
         }
-      };
 
-      request(requestOptions).pipe(passThroughStream)
-      const bucketName = config.AWS_S3_BUCKET_NAME;
-      const objectName = repo.full_name + ".tar.gz";
-      const params = {
-        Bucket: bucketName,
-        Key: objectName,
-        Body: passThroughStream,
-        //StorageClass: options.s3StorageClass || "STANDARD",
-        StorageClass: "STANDARD",
-        ServerSideEncryption: "AES256"
-      }
-
-      return uploader(params).then(result => {
-        console.log("[✓] " + repo.full_name + ".git - backed up")
-      })
+        return uploader(params).then(result => {
+            console.log("[✓] " + repo.full_name + ".git - backed up")
+        })
     })
 
     s3Synced = true;
     return Promise.all(tasks)
-  }
+}
 
 module.exports.init = async () => {
     await backupProcess();
