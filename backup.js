@@ -196,9 +196,9 @@ async function copyReposToS3(repo) {
         //     }
         // };
 
-        child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`, options);
+        child_process.execSync(`zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
         const zip = new StreamZip({
-            file: `${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}.zip`,
+            file: `${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`,
             storeEntries: true
         });
 
