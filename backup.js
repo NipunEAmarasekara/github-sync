@@ -206,7 +206,7 @@ async function copyReposToS3(repo) {
         const params = {
             Bucket: bucketName,
             Key: objectName,
-            Body:  zip,
+            Body:  Buffer.from(zip, "binary"),
             //StorageClass: options.s3StorageClass || "STANDARD",
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
