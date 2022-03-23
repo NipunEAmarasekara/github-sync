@@ -157,8 +157,10 @@ async function backupProcess() {
                         }
                     });
                 });
+                console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
             }
-            console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
+            if (mode === 'none')
+                console.log(`[✓] ${repo} Repository locally synced.\n`);
             count++;
         });
 
