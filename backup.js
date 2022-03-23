@@ -93,7 +93,7 @@ async function backupProcess() {
             let repo = repository.name;
 
             //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
-            if (mode === 'cc') {
+            if (mode === 'cc' || mode === undefined) {
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                     if (err) {
                         if (err.code === 'RepositoryDoesNotExistException') {
@@ -117,20 +117,20 @@ async function backupProcess() {
                 if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
                     child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
                     child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                    if (mode === 'cc')
+                    if (mode === 'cc' || mode === undefined)
                         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 } else {
                     child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                    if (mode === 'cc')
+                    if (mode === 'cc' || mode === undefined)
                         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 }
             });
 
-            if (mode === 's3')
+            if (mode === 's3' || mode === undefined)
                 await copyReposToS3(repository);
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
-            if (mode === 'cc') {
+            if (mode === 'cc' || mode === undefined) {
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                     if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
                         try {
