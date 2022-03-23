@@ -7,7 +7,7 @@ const port = 8080
 async function scheduler(mode) {
   //Time format -> min hour day-of-month month day-of-week
   // 0 0 * * * = midnight
-  cron.schedule('* * * * *', async function () {
+  cron.schedule('0 0 * * *', async function () {
     console.log(`Schedular started at ${new Date().toLocaleString()}`);
     await backup.init(mode);
   });
