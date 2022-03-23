@@ -199,7 +199,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
                     throw new Error(error);
                 }
                 resolve("done");
-            })/*.pipe(passThroughStream)*/;
+            }).pipe(passThroughStream);
         });
         const bucketName = config.AWS_S3_BUCKET_NAME;
         const objectName = repo.full_name + ".zip";
