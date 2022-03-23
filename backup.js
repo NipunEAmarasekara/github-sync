@@ -158,11 +158,10 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
+            if (mode === 's3' || mode === undefined)
+                await copyReposToS3(repository);
             count++;
         });
-
-        if (mode === 's3' || mode === undefined)
-                await copyReposToS3();
 
         //Wait until the end of the backup process
         const interval = setInterval(function () {
@@ -177,40 +176,40 @@ async function backupProcess() {
     }
 }
 
-async function copyReposToS3() {
+async function copyReposToS3(repo) {
     try {
-        const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
-        child_process.execSync(command, options);
-        console.log(`[✓] Repositories synced to s3.\n`);
-        // const uploader = Promise.promisify(s3.upload.bind(s3));
-        // const passThroughStream = new stream.PassThrough();
-        // const arhiveURL =
-        //     "https://api.github.com/repos/" +
-        //     repo.full_name +
-        //     "/tarball/master?access_token=" +
-        //     config.GITHUB_ACCESS_TOKEN;
-        // const requestOptions = {
-        //     url: arhiveURL,
-        //     headers: {
-        //         "User-Agent": "nodejs"
-        //     }
-        // };
+        // const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
+        // child_process.execSync(command, options);
+        // console.log(`[✓] Repositories synced to s3.\n`);
+        const uploader = Promise.promisify(s3.upload.bind(s3));
+        const passThroughStream = new stream.PassThrough();
+        const arhiveURL =
+            "https://api.github.com/repos/" +
+            repo.full_name +
+            "/tarball/master?access_token=" +
+            config.GITHUB_ACCESS_TOKEN;
+        const requestOptions = {
+            url: arhiveURL,
+            headers: {
+                "User-Agent": "nodejs"
+            }
+        };
 
-        // request(requestOptions).pipe(passThroughStream);
-        // const bucketName = config.AWS_S3_BUCKET_NAME;
-        // const objectName = repo.full_name + ".tar.gz";
-        // const params = {
-        //     Bucket: bucketName,
-        //     Key: objectName,
-        //     Body: passThroughStream,
-        //     //StorageClass: options.s3StorageClass || "STANDARD",
-        //     StorageClass: "STANDARD",
-        //     ServerSideEncryption: "AES256"
-        // };
+        request(requestOptions).pipe(passThroughStream);
+        const bucketName = config.AWS_S3_BUCKET_NAME;
+        const objectName = repo.full_name + ".tar.gz";
+        const params = {
+            Bucket: bucketName,
+            Key: objectName,
+            Body: passThroughStream,
+            //StorageClass: options.s3StorageClass || "STANDARD",
+            StorageClass: "STANDARD",
+            ServerSideEncryption: "AES256"
+        };
 
-        // return uploader(params).then(result => {
-        //     console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-        // });
+        return uploader(params).then(result => {
+            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
+        });
     } catch (e) {
         console.log(e);
     }
