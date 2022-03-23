@@ -198,7 +198,6 @@ async function copyReposToS3(repo, index, repositoryCount) {
                     reject(error);
                     throw new Error(error);
                 }
-                console.log(body);
                 resolve("done");
             })/*.pipe(passThroughStream)*/;
         });
