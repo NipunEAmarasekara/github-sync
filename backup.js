@@ -6,8 +6,6 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
-const util = require('util')
-const exec = util.promisify(require('child_process').exec);
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -128,9 +126,6 @@ async function backupProcess() {
                 }
             });
 
-            if (mode === 's3' || mode === undefined)
-                await copyReposToS3(repository);
-
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
@@ -163,6 +158,8 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
+            if (mode === 's3' || mode === undefined)
+                await copyReposToS3();
             count++;
         });
 
@@ -179,14 +176,11 @@ async function backupProcess() {
     }
 }
 
-async function copyReposToS3(repo) {
+async function copyReposToS3() {
     try {
         const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/ s3://${config.AWS_S3_BUCKET_NAME}`;
-        exec(command)
-            .then(() => console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`))
-            .catch(err => {
-                console.log(err)
-            });
+        child_process.execSync(command, options);
+        console.log(`[✓] Repositories synced to s3.\n`);
         // const uploader = Promise.promisify(s3.upload.bind(s3));
         // const passThroughStream = new stream.PassThrough();
         // const arhiveURL =
