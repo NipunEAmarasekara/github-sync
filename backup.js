@@ -159,7 +159,7 @@ async function backupProcess() {
             count++;
         });
 
-        copyReposToS3(repositories);
+        await copyReposToS3(repositories);
 
         //Wait until the end of the backup process
         const interval = setInterval(function () {
@@ -174,7 +174,7 @@ async function backupProcess() {
     }
 }
 
-function copyReposToS3(repos) {
+async function copyReposToS3(repos) {
     const date = new Date().toISOString();
 
     const uploader = Promise.promisify(s3.upload.bind(s3))
@@ -193,7 +193,6 @@ function copyReposToS3(repos) {
       };
 
       request(requestOptions).pipe(passThroughStream)
-      console.log(config.AWS_S3_BUCKET_NAME);
       const bucketName = config.AWS_S3_BUCKET_NAME;
       const objectName = repo.full_name + ".tar.gz";
       const params = {
