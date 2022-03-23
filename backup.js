@@ -153,7 +153,7 @@ async function backupProcess() {
                     }
                 });
             });
-            console.log(`[✓] ${repo} Repository synced\n`);
+            console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
             count++;
         });
 
@@ -175,7 +175,6 @@ async function backupProcess() {
 async function copyReposToS3(repos) {
     const uploader = Promise.promisify(s3.upload.bind(s3))
     const tasks = repos.map(repo => {
-        console.log(repo);
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
             "https://api.github.com/repos/" +
@@ -202,7 +201,7 @@ async function copyReposToS3(repos) {
         }
 
         return uploader(params).then(result => {
-            console.log("[✓] " + repo.full_name + ".git - backed up")
+            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
         })
     })
 
