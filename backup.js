@@ -179,6 +179,7 @@ async function backupProcess() {
 
 async function copyReposToS3(repo) {
     try {
+        console.log(repo.name);
         const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
