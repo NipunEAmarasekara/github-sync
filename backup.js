@@ -7,7 +7,6 @@ const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
 
-let s3Synced = false;
 let options = { stdio: 'pipe' };
 
 //Initialize github api
@@ -88,7 +87,6 @@ async function getRepoList() {
 //Github to Codecommit backup process
 async function backupProcess() {
     try {
-        s3Synced = false;
         console.log('\n####################### Started Github Backup Process #######################\n');
         const repositories = await getRepoList();
         let count = 0;
@@ -126,6 +124,8 @@ async function backupProcess() {
                 }
             });
 
+            await copyReposToS3(repository);
+
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
                 if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
@@ -157,11 +157,9 @@ async function backupProcess() {
             count++;
         });
 
-        await copyReposToS3(repositories);
-
         //Wait until the end of the backup process
         const interval = setInterval(function () {
-            if (count === repositories.length && s3Synced) {
+            if (count === repositories.length) {
                 console.log('\n####################### Completed Github Backup Process #######################\n');
                 clearInterval(interval);
                 return null;
@@ -172,10 +170,8 @@ async function backupProcess() {
     }
 }
 
-async function copyReposToS3(repos) {
-    console.log('s3 backup');
+async function copyReposToS3(repo) {
     const uploader = Promise.promisify(s3.upload.bind(s3))
-    const tasks = repos.map(async repo => {
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
             "https://api.github.com/repos/" +
@@ -203,11 +199,7 @@ async function copyReposToS3(repos) {
 
         return uploader(params).then(result => {
             console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-        })
-    });
-
-    s3Synced = true;
-    return Promise.all(tasks)
+        });
 }
 
 module.exports.init = async () => {
