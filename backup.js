@@ -90,7 +90,7 @@ async function backupProcess() {
         repositories = repositories.sort((a,b) => a.size - b.size);
         let count = 0;
         repositories.forEach(async (repository, index) => {
-            let username = repository.owner.login;Ï
+            let username = repository.owner.login;
             let repo = repository.name;
 
             //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
