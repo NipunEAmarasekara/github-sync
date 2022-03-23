@@ -158,10 +158,11 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            if (mode === 's3' || mode === undefined)
-                await copyReposToS3();
             count++;
         });
+
+        if (mode === 's3' || mode === undefined)
+                await copyReposToS3();
 
         //Wait until the end of the backup process
         const interval = setInterval(function () {
