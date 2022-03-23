@@ -202,7 +202,7 @@ async function copyReposToS3(repo) {
             storeEntries: true
         });
 
-        request(requestOptions).pipe(passThroughStream);
+        //request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
         const objectName = repo.full_name + ".tar.gz";
         const params = {
