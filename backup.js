@@ -197,7 +197,7 @@ async function copyReposToS3(repo) {
 
         request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
-        const objectName = repo.full_name + ".tar.gz";
+        const objectName = repo.full_name + ".zip";
         const params = {
             Bucket: bucketName,
             Key: objectName,
