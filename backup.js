@@ -184,7 +184,7 @@ async function copyReposToS3(repo) {
         const arhiveURL =
             "https://api.github.com/repos/" +
             repo.full_name +
-            "/zipball/main?access_token=" +
+            "/tarball/main?access_token=" +
             config.GITHUB_ACCESS_TOKEN;
         const requestOptions = {
             url: arhiveURL,
@@ -195,7 +195,7 @@ async function copyReposToS3(repo) {
 
         request(requestOptions).pipe(passThroughStream);
         const bucketName = config.AWS_S3_BUCKET_NAME;
-        const objectName = repo.full_name + ".zip";
+        const objectName = repo.full_name + ".tar.gz";
         const params = {
             Bucket: bucketName,
             Key: objectName,
