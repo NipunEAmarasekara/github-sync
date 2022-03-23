@@ -6,6 +6,8 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
+const util = require('util')
+const exec = util.promisify(require('child_process').exec);
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -110,23 +112,21 @@ async function backupProcess() {
             }
 
             //Get repository branches list from the github
-            if (mode !== 's3') {
-                const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
+            const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
 
-                branches.forEach(async branch => {
-                    //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
-                    if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
-                        child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                        if (mode === 'cc' || mode === undefined)
-                            child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
-                    } else {
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                        if (mode === 'cc' || mode === undefined)
-                            child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
-                    }
-                });
-            }
+            branches.forEach(async branch => {
+                //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
+                if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
+                    child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    if (mode === 'cc' || mode === undefined)
+                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
+                } else {
+                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    if (mode === 'cc' || mode === undefined)
+                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
+                }
+            });
 
             if (mode === 's3' || mode === undefined)
                 await copyReposToS3(repository);
@@ -181,39 +181,46 @@ async function backupProcess() {
 
 async function copyReposToS3(repo) {
     try {
-        const uploader = Promise.promisify(s3.upload.bind(s3));
-        const passThroughStream = new stream.PassThrough();
-        const arhiveURL =
-            "https://api.github.com/repos/" +
-            repo.full_name +
-            "/tarball/master?access_token=" +
-            config.GITHUB_ACCESS_TOKEN;
-        const requestOptions = {
-            url: arhiveURL,
-            headers: {
-                "User-Agent": "nodejs"
-            }
-        };
+        const command = `aws s3 sync ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} s3://${config.AWS_S3_BUCKET_NAME}`;
+        exec(command)
+            .then(() => console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`))
+            .catch(err => {
+                console.log(err)
+            });
+        // const uploader = Promise.promisify(s3.upload.bind(s3));
+        // const passThroughStream = new stream.PassThrough();
+        // const arhiveURL =
+        //     "https://api.github.com/repos/" +
+        //     repo.full_name +
+        //     "/tarball/master?access_token=" +
+        //     config.GITHUB_ACCESS_TOKEN;
+        // const requestOptions = {
+        //     url: arhiveURL,
+        //     headers: {
+        //         "User-Agent": "nodejs"
+        //     }
+        // };
 
-        request(requestOptions).pipe(passThroughStream);
-        const bucketName = config.AWS_S3_BUCKET_NAME;
-        const objectName = repo.full_name + ".tar.gz";
-        const params = {
-            Bucket: bucketName,
-            Key: objectName,
-            Body: passThroughStream,
-            //StorageClass: options.s3StorageClass || "STANDARD",
-            StorageClass: "STANDARD",
-            ServerSideEncryption: "AES256"
-        };
+        // request(requestOptions).pipe(passThroughStream);
+        // const bucketName = config.AWS_S3_BUCKET_NAME;
+        // const objectName = repo.full_name + ".tar.gz";
+        // const params = {
+        //     Bucket: bucketName,
+        //     Key: objectName,
+        //     Body: passThroughStream,
+        //     //StorageClass: options.s3StorageClass || "STANDARD",
+        //     StorageClass: "STANDARD",
+        //     ServerSideEncryption: "AES256"
+        // };
 
-        return uploader(params).then(result => {
-            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-        });
+        // return uploader(params).then(result => {
+        //     console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
+        // });
     } catch (e) {
         console.log(e);
     }
 }
+
 
 module.exports.init = async (m) => {
     mode = m;
