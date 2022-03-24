@@ -298,7 +298,6 @@ async function localToS3(repo, index, repositoryCount) {
             MultipartUpload: {
                 Parts: uploadPartResults
             },
-            UploadId: multipartCreateResult.UploadId
         }).promise()
     }
 }
