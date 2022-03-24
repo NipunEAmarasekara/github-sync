@@ -225,6 +225,8 @@ async function copyReposToS3(repo, index, repositoryCount) {
 
 async function localToS3(repo, index, repositoryCount) {
     let chunkCount = 1;
+    var CHUNK_SIZE = 10 * 1024 * 1024, // 10MB
+    buffer = Buffer.alloc(CHUNK_SIZE);
     let uploadPartResults = [];
     let multipartCreateResult = null;
     let uploadPromiseResult = null;
