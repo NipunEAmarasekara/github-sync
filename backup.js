@@ -7,6 +7,7 @@ const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
 const mime = require('mime-types');
+const { spawn } = require('child_process');
 
 let options = { stdio: 'pipe', shell: true };
 let mode = null;
@@ -125,7 +126,8 @@ async function backupProcess() {
                         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 } else {
                     console.log(`${repository.name}:${branch.name} refreshed`);
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    //child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                    spawn(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, [], options);
                     if (mode === 'cc' || mode === undefined)
                         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
                 }
