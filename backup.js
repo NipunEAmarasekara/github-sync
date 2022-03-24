@@ -131,10 +131,6 @@ async function backupProcess() {
                 }
             });
 
-            // if (mode === 's3' || mode === undefined)
-            //     //await copyReposToS3(repository, index, repositories.length);
-            //     await localToS3(repository, index, repositories.length);
-
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
@@ -168,6 +164,12 @@ async function backupProcess() {
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
             count++;
+        });
+
+        repositories.forEach((repo,index) => {
+            if (mode === 's3' || mode === undefined)
+                //await copyReposToS3(repository, index, repositories.length);
+                await localToS3(repo, index, repositories.length);
         });
 
         //Wait until the end of the backup process
