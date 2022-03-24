@@ -87,7 +87,7 @@ async function backupProcess() {
     try {
         console.log('\n####################### Started Github Backup Process #######################\n');
         let repositories = await getRepoList();
-        repositories = repositories.sort((a,b) => b.size - a.size);
+        repositories = repositories.sort((a, b) => b.size - a.size);
         let count = 0;
         repositories.forEach(async (repository, index) => {
             let username = repository.owner.login;
@@ -223,21 +223,23 @@ async function copyReposToS3(repo, index, repositoryCount) {
     }
 }
 
-async function localToS3(repo, index, repositoryCount){
-    console.log(`Creating ${repo.full_name}.zip`);
-    child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-    const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-    const params = {
-        Bucket: config.AWS_S3_BUCKET_NAME,
-        Key: repo.full_name + ".zip",
-        Body: fileContent,
-        StorageClass: "STANDARD",
-        ServerSideEncryption: "AES256"
-    };
+async function localToS3(repo, index, repositoryCount) {
+    if (repo.size / 1000 < 150) {
+        console.log(`Creating ${repo.full_name}.zip`);
+        child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+        const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+        const params = {
+            Bucket: config.AWS_S3_BUCKET_NAME,
+            Key: repo.full_name + ".zip",
+            Body: fileContent,
+            StorageClass: "STANDARD",
+            ServerSideEncryption: "AES256"
+        };
+    }
 
     //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
     // Uploading files to the bucket
-    await s3.upload(params, function(err, data) {
+    await s3.upload(params, function (err, data) {
         if (err) {
             throw err;
         }
