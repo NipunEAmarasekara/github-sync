@@ -224,7 +224,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
 }
 
 async function localToS3(repo, index, repositoryCount) {
-    if (repo.size / 1000 < 150) {
+    if (repo.size / 1000 < 50) {
         console.log(`Creating ${repo.full_name}.zip`);
         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
             child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
