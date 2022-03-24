@@ -44,7 +44,7 @@ async function getRepoList() {
         const organizations = await getOrganizations();
         if (!organizations.error) {
             await Promise.all(organizations.map(async (org) => {
-                const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 100});
+                const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 100 });
                 obj.data.forEach(repo => {
                     repos.push(repo);
                 });
@@ -165,10 +165,10 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            
+
         });
 
-        repositories.forEach(async (repo,index) => {
+        repositories.forEach(async (repo, index) => {
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
                 await localToS3(repo, index, repositories.length);
@@ -246,9 +246,11 @@ async function localToS3(repo, index, repositoryCount) {
                 Body: stream,
                 ContentType: contentType
             };
-            
+
             try {
-                await s3.upload(params, {partSize: 100 * 1024 * 1024,queueSize: 5}).promise();
+                await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 5 }).on('httpUploadProgress', function (evt) {
+                    console.log("Uploaded :: " + parseInt((evt.loaded * 100) / evt.total) + '%');
+                }).promise();
                 console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
             } catch (error) {
                 console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
