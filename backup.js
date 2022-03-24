@@ -163,13 +163,14 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            count++;
+            
         });
 
         repositories.forEach(async (repo,index) => {
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
                 await localToS3(repo, index, repositories.length);
+            count++;
         });
 
         //Wait until the end of the backup process
