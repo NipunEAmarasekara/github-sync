@@ -43,27 +43,27 @@ async function getRepoList() {
     try {
         const organizations = await getOrganizations();
         if (!organizations.error) {
-            await Promise.all(organizations.map(async (org) => {
-                const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 100 });
-                obj.data.forEach(repo => {
-                    repos.push(repo);
-                });
-            }));
             // await Promise.all(organizations.map(async (org) => {
-            //     await octokit.paginate(
-            //         octokit.repos.listForOrg,
-            //         {
-            //             org: org.login,
-            //             type: 'all',
-            //             per_page: 100,
-            //         },
-            //         (response) => {
-            //             response.data.forEach(repo => {
-            //                 repos.push(repo);
-            //             });
-            //         }
-            //     );
+            //     const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 100});
+            //     obj.data.forEach(repo => {
+            //         repos.push(repo);
+            //     });
             // }));
+            await Promise.all(organizations.map(async (org) => {
+                await octokit.paginate(
+                    octokit.repos.listForOrg,
+                    {
+                        org: org.login,
+                        type: 'all',
+                        per_page: 100,
+                    },
+                    (response) => {
+                        response.data.forEach(repo => {
+                            repos.push(repo);
+                        });
+                    }
+                );
+            }));
             if (repos.length > 0) {
                 return repos;
             } else {
@@ -165,10 +165,10 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-
+            
         });
 
-        repositories.forEach(async (repo, index) => {
+        repositories.forEach(async (repo,index) => {
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
                 await localToS3(repo, index, repositories.length);
@@ -246,11 +246,9 @@ async function localToS3(repo, index, repositoryCount) {
                 Body: stream,
                 ContentType: contentType
             };
-
+            
             try {
-                await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 5 }).on('httpUploadProgress', function (evt) {
-                    console.log("Uploaded :: " + parseInt((evt.loaded * 100) / evt.total) + '%');
-                }).promise();
+                await s3.upload(params, {partSize: 100 * 1024 * 1024,queueSize: 5}).promise();
                 console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
             } catch (error) {
                 console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
