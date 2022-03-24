@@ -243,7 +243,6 @@ async function localToS3(repo, index, repositoryCount) {
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             StorageClass: "STANDARD",
-            ACL: "public-read",
             ContentType: "application/zip",
         }).promise()
 
