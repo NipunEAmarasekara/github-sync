@@ -131,7 +131,7 @@ async function backupProcess() {
 
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
-                await localToS3(repository, index, repositories.length);
+                localToS3(repository, index, repositories.length);
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
@@ -223,7 +223,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
     }
 }
 
-async function localToS3(repo, index, repositoryCount) {
+function localToS3(repo, index, repositoryCount) {
     let chunkCount = 1;
     var CHUNK_SIZE = 10 * 1024 * 1024, // 10MB
     buffer = Buffer.alloc(CHUNK_SIZE);
