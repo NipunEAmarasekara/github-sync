@@ -239,7 +239,7 @@ function localToS3(repo, index, repositoryCount) {
                 child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
         }
 
-        multipartCreateResult = await s3.createMultipartUpload({
+        multipartCreateResult = s3.createMultipartUpload({
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             StorageClass: "STANDARD",
@@ -270,7 +270,7 @@ function localToS3(repo, index, repositoryCount) {
                         data = buffer;
                     }
 
-                    uploadPromiseResult = await s3.uploadPart({
+                    uploadPromiseResult = s3.uploadPart({
                         Body: data,
                         Bucket: config.AWS_S3_BUCKET_NAME,
                         Key: repo.full_name + ".zip",
@@ -293,7 +293,7 @@ function localToS3(repo, index, repositoryCount) {
             readNextChunk();
         });
         console.log(`uploading ${repo.name}`);
-        completeUploadResponce = await s3.completeMultipartUpload({
+        completeUploadResponce = s3.completeMultipartUpload({
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             MultipartUpload: {
