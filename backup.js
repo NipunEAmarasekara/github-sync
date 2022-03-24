@@ -245,7 +245,7 @@ async function localToS3(repo, index, repositoryCount) {
             StorageClass: "STANDARD",
         }).promise()
 
-        fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, 'r', function (err, fd) {
+        fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`, 'r', function (err, fd) {
             if (err) throw err;
 
             function readNextChunk() {
