@@ -234,7 +234,7 @@ async function localToS3(repo, index, repositoryCount) {
 
     if (repo.size / 1000 < 25) {
         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-            if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)){
+            if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
                 console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
                 child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
             }
@@ -270,10 +270,10 @@ async function localToS3(repo, index, repositoryCount) {
                         data = buffer;
                     }
 
-                    let uploadPromiseResult = await s3.uploadPart({
+                    uploadPromiseResult = await s3.uploadPart({
                         Body: data,
-                        Bucket: process.env.BUCKET,
-                        Key: "movie.mp4",
+                        Bucket: config.AWS_S3_BUCKET_NAME,
+                        Key: repo.full_name + ".zip",
                         PartNumber: chunkCount,
                         UploadId: multipartCreateResult.UploadId,
                     }).promise()
