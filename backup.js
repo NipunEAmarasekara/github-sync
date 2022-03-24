@@ -128,7 +128,8 @@ async function backupProcess() {
             });
 
             if (mode === 's3' || mode === undefined)
-                await copyReposToS3(repository, index, repositories.length);
+                //await copyReposToS3(repository, index, repositories.length);
+                await localToS3(repository, index, repositories.length);
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
@@ -217,12 +218,27 @@ async function copyReposToS3(repo, index, repositoryCount) {
         });
     } catch (e) {
         console.log(e);
-        return;
     }
 }
 
 async function localToS3(repo, index, repositoryCount){
-    child_process.execSync(`zip ${repo.full_name} ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+    child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+    const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+    const params = {
+        Bucket: config.AWS_S3_BUCKET_NAME,
+        Key: repo.full_name + ".zip",
+        Body: fileContent,
+        StorageClass: "STANDARD",
+        ServerSideEncryption: "AES256"
+    };
+
+    // Uploading files to the bucket
+    s3.upload(params, function(err, data) {
+        if (err) {
+            throw err;
+        }
+        console.log(`File uploaded successfully. ${data.Location}`);
+    });
 }
 
 module.exports.init = async (m) => {
