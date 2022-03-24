@@ -226,25 +226,26 @@ async function copyReposToS3(repo, index, repositoryCount) {
 async function localToS3(repo, index, repositoryCount) {
     if (repo.size / 1000 < 150) {
         console.log(`Creating ${repo.full_name}.zip`);
-        child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-        const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-        const params = {
-            Bucket: config.AWS_S3_BUCKET_NAME,
-            Key: repo.full_name + ".zip",
-            Body: fileContent,
-            StorageClass: "STANDARD",
-            ServerSideEncryption: "AES256"
-        };
+        if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+            child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+            const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            const params = {
+                Bucket: config.AWS_S3_BUCKET_NAME,
+                Key: repo.full_name + ".zip",
+                Body: fileContent,
+                StorageClass: "STANDARD",
+                ServerSideEncryption: "AES256"
+            };
 
-        child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-        // Uploading files to the bucket
-        await s3.upload(params, function (err, data) {
-            if (err) {
-                throw err;
-            }
-            console.log(`File uploaded successfully. ${data.Location}`);
-        });
-
+            child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+            // Uploading files to the bucket
+            await s3.upload(params, function (err, data) {
+                if (err) {
+                    throw err;
+                }
+                console.log(`File uploaded successfully. ${data.Location}`);
+            });
+        }
     }
 }
 
