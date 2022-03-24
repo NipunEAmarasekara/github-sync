@@ -226,11 +226,21 @@ async function copyReposToS3(repo, index, repositoryCount) {
 async function localToS3(repo, index, repositoryCount) {
     let chunkCount = 1;
     let uploadPartResults = [];
+    let multipartCreateResult = null;
+    let uploadPromiseResult = null;
+    let completeUploadResponce = null;
+
     console.log(`Creating ${repo.full_name}.zip`);
     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
         if(!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`))
             child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
     }
+
+    multipartCreateResult = await s3.createMultipartUpload({
+        Bucket: config.AWS_S3_BUCKET_NAME,
+        Key: repo.full_name + ".zip",
+        StorageClass: "STANDARD",
+    }).promise()
 
     fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, 'r', function (err, fd) {
         if (err) throw err;
@@ -256,13 +266,7 @@ async function localToS3(repo, index, repositoryCount) {
                     data = buffer;
                 }
 
-                let multipartCreateResult = await s3.createMultipartUpload({
-                    Bucket: config.AWS_S3_BUCKET_NAME,
-                    Key: repo.full_name + ".zip",
-                    StorageClass: "STANDARD",
-                }).promise()
-
-                let uploadPromiseResult = await s3.uploadPart({
+                uploadPromiseResult = await s3.uploadPart({
                     Body: data,
                     Bucket: config.AWS_S3_BUCKET_NAME,
                     Key: repo.full_name + ".zip",
@@ -286,7 +290,7 @@ async function localToS3(repo, index, repositoryCount) {
         readNextChunk();
     });
 
-    let completeUploadResponce = await s3.completeMultipartUpload({
+    completeUploadResponce = await s3.completeMultipartUpload({
         Bucket: config.AWS_S3_BUCKET_NAME,
         Key: repo.full_name + ".zip",
         MultipartUpload: {
