@@ -8,7 +8,7 @@ const request = require("request");
 const Promise = require("bluebird");
 const mime = require('mime-types');
 
-let options = { stdio: 'pipe' };
+let options = { stdio: 'pipe', shell: true };
 let mode = null;
 let codecommit = null;
 let s3 = null;
