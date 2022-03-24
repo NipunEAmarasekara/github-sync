@@ -235,16 +235,17 @@ async function localToS3(repo, index, repositoryCount) {
             StorageClass: "STANDARD",
             ServerSideEncryption: "AES256"
         };
-    }
 
-    //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-    // Uploading files to the bucket
-    await s3.upload(params, function (err, data) {
-        if (err) {
-            throw err;
-        }
-        console.log(`File uploaded successfully. ${data.Location}`);
-    });
+        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+        // Uploading files to the bucket
+        await s3.upload(params, function (err, data) {
+            if (err) {
+                throw err;
+            }
+            console.log(`File uploaded successfully. ${data.Location}`);
+        });
+
+    }
 }
 
 module.exports.init = async (m) => {
