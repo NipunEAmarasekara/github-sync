@@ -371,7 +371,7 @@ module.exports.init = async (m) => {
         } else if (mode === 'cc')
             codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
         else if (mode === 's3')
-            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 10 });
+            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
     await backupProcess();
