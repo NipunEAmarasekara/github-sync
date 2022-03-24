@@ -131,7 +131,7 @@ async function backupProcess() {
 
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
-                localToS3(repository, index, repositories.length);
+                await localToS3(repository, index, repositories.length);
 
             //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
             if (mode === 'cc' || mode === undefined) {
@@ -223,7 +223,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
     }
 }
 
-function localToS3(repo, index, repositoryCount) {
+async function localToS3(repo, index, repositoryCount) {
     let chunkCount = 1;
     var CHUNK_SIZE = 10 * 1024 * 1024, // 10MB
     buffer = Buffer.alloc(CHUNK_SIZE);
@@ -239,7 +239,7 @@ function localToS3(repo, index, repositoryCount) {
                 child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
         }
 
-        multipartCreateResult = s3.createMultipartUpload({
+        multipartCreateResult = await s3.createMultipartUpload({
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             StorageClass: "STANDARD",
@@ -270,7 +270,7 @@ function localToS3(repo, index, repositoryCount) {
                         data = buffer;
                     }
 
-                    uploadPromiseResult = s3.uploadPart({
+                    uploadPromiseResult = await s3.uploadPart({
                         Body: data,
                         Bucket: config.AWS_S3_BUCKET_NAME,
                         Key: repo.full_name + ".zip",
@@ -293,7 +293,7 @@ function localToS3(repo, index, repositoryCount) {
             readNextChunk();
         });
         console.log(`uploading ${repo.name}`);
-        completeUploadResponce = s3.completeMultipartUpload({
+        completeUploadResponce = await s3.completeMultipartUpload({
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             MultipartUpload: {
