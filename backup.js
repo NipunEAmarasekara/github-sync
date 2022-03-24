@@ -243,6 +243,8 @@ async function localToS3(repo, index, repositoryCount) {
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
             StorageClass: "STANDARD",
+            ACL: "public-read",
+            ContentType: "application/zip",
         }).promise()
 
         fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`, 'r', function (err, fd) {
@@ -298,6 +300,7 @@ async function localToS3(repo, index, repositoryCount) {
             MultipartUpload: {
                 Parts: uploadPartResults
             },
+            UploadId: multipartCreateResult.UploadId
         }).promise()
     }
 }
