@@ -242,14 +242,8 @@ async function localToS3(repo, index, repositoryCount) {
                 ContentType: contentType
             };
             
-            const options = {
-                partSize: 100 * 1024 * 1024,
-                    // how many concurrent uploads
-                queueSize: 5
-            };
-            
             try {
-                await s3.upload(params, options).promise();
+                await s3.upload(params, {partSize: 100 * 1024 * 1024,queueSize: 5}).promise();
                 console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
             } catch (error) {
                 console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
