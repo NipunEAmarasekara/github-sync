@@ -42,27 +42,27 @@ async function getRepoList() {
     try {
         const organizations = await getOrganizations();
         if (!organizations.error) {
-            // await Promise.all(organizations.map(async (org) => {
-            //     const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 5 });
-            //     obj.data.forEach(repo => {
-            //         repos.push(repo);
-            //     });
-            // }));
             await Promise.all(organizations.map(async (org) => {
-                await octokit.paginate(
-                    octokit.repos.listForOrg,
-                    {
-                        org: org.login,
-                        type: 'all',
-                        per_page: 100,
-                    },
-                    (response) => {
-                        response.data.forEach(repo => {
-                            repos.push(repo);
-                        });
-                    }
-                );
+                const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 5 });
+                obj.data.forEach(repo => {
+                    repos.push(repo);
+                });
             }));
+            // await Promise.all(organizations.map(async (org) => {
+            //     await octokit.paginate(
+            //         octokit.repos.listForOrg,
+            //         {
+            //             org: org.login,
+            //             type: 'all',
+            //             per_page: 100,
+            //         },
+            //         (response) => {
+            //             response.data.forEach(repo => {
+            //                 repos.push(repo);
+            //             });
+            //         }
+            //     );
+            // }));
             if (repos.length > 0) {
                 return repos;
             } else {
