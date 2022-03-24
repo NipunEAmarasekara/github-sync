@@ -230,13 +230,6 @@ async function localToS3(repo, index, repositoryCount) {
         console.log(`Creating ${repo.full_name}.zip`);
         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
             child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-
-            let multipartCreateResult = await s3.createMultipartUpload({
-                Bucket: config.AWS_S3_BUCKET_NAME,
-                Key: repo.full_name + ".zip",
-                StorageClass: "STANDARD",
-            }).promise()
-
         }
 
         fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, 'r', function (err, fd) {
@@ -262,6 +255,12 @@ async function localToS3(repo, index, repositoryCount) {
                     else {
                         data = buffer;
                     }
+
+                    let multipartCreateResult = await s3.createMultipartUpload({
+                        Bucket: config.AWS_S3_BUCKET_NAME,
+                        Key: repo.full_name + ".zip",
+                        StorageClass: "STANDARD",
+                    }).promise()
 
                     let uploadPromiseResult = await s3.uploadPart({
                         Body: data,
