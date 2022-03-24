@@ -289,10 +289,9 @@ async function localToS3(repo, index, repositoryCount) {
                 });
 
             }
-
             readNextChunk();
         });
-
+        console.log(`uploading ${repo.name}`);
         completeUploadResponce = await s3.completeMultipartUpload({
             Bucket: config.AWS_S3_BUCKET_NAME,
             Key: repo.full_name + ".zip",
