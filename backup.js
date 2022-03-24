@@ -180,7 +180,7 @@ async function backupProcess() {
 
 async function copyReposToS3(repo, index, repositoryCount) {
     try {
-        console.log(`${repo.name} : ${index}/${repositoryCount}`);
+        console.log(`${repo.name} : ${index}/${repositoryCount} : size: ${repo.size}`);
         const uploader = Promise.promisify(s3.upload.bind(s3));
         const passThroughStream = new stream.PassThrough();
         const arhiveURL =
@@ -221,6 +221,9 @@ async function copyReposToS3(repo, index, repositoryCount) {
     }
 }
 
+async function localToS3(repo, index, repositoryCount){
+    child_process.execSync(`zip ${repo.full_name} ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+}
 
 module.exports.init = async (m) => {
     mode = m;
