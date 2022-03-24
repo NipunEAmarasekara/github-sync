@@ -233,6 +233,7 @@ async function localToS3(repo, index, repositoryCount){
         ServerSideEncryption: "AES256"
     };
 
+    //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
     // Uploading files to the bucket
     await s3.upload(params, function(err, data) {
         if (err) {
