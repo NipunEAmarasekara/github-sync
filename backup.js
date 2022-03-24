@@ -231,8 +231,7 @@ async function localToS3(repo, index, repositoryCount) {
     let completeUploadResponce = null;
 
     if (repo.size / 1000 < 25) {
-
-        console.log(`Creating ${repo.full_name}.zip`);
+        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
             if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`))
                 child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
