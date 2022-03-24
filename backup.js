@@ -166,7 +166,7 @@ async function backupProcess() {
             count++;
         });
 
-        repositories.forEach((repo,index) => {
+        repositories.forEach(async (repo,index) => {
             if (mode === 's3' || mode === undefined)
                 //await copyReposToS3(repository, index, repositories.length);
                 await localToS3(repo, index, repositories.length);
