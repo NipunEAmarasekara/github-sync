@@ -6,6 +6,7 @@ const fs = require("fs");
 const stream = require("stream");
 const request = require("request");
 const Promise = require("bluebird");
+const mime = require('mime-types');
 
 let options = { stdio: 'pipe' };
 let mode = null;
@@ -41,27 +42,27 @@ async function getRepoList() {
     try {
         const organizations = await getOrganizations();
         if (!organizations.error) {
-            await Promise.all(organizations.map(async (org) => {
-                const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 5 });
-                obj.data.forEach(repo => {
-                    repos.push(repo);
-                });
-            }));
             // await Promise.all(organizations.map(async (org) => {
-            //     await octokit.paginate(
-            //         octokit.repos.listForOrg,
-            //         {
-            //             org: org.login,
-            //             type: 'all',
-            //             per_page: 100,
-            //         },
-            //         (response) => {
-            //             response.data.forEach(repo => {
-            //                 repos.push(repo);
-            //             });
-            //         }
-            //     );
+            //     const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 5 });
+            //     obj.data.forEach(repo => {
+            //         repos.push(repo);
+            //     });
             // }));
+            await Promise.all(organizations.map(async (org) => {
+                await octokit.paginate(
+                    octokit.repos.listForOrg,
+                    {
+                        org: org.login,
+                        type: 'all',
+                        per_page: 100,
+                    },
+                    (response) => {
+                        response.data.forEach(repo => {
+                            repos.push(repo);
+                        });
+                    }
+                );
+            }));
             if (repos.length > 0) {
                 return repos;
             } else {
@@ -224,158 +225,138 @@ async function copyReposToS3(repo, index, repositoryCount) {
 }
 
 async function localToS3(repo, index, repositoryCount) {
-    let chunkCount = 1;
-    var CHUNK_SIZE = 10 * 1024 * 1024, // 10MB
-        buffer = Buffer.alloc(CHUNK_SIZE);
-    let uploadPartResults = [];
-    let multipartCreateResult = null;
-    let uploadPromiseResult = null;
-    let completeUploadResponce = null;
-
     if (repo.size / 1000 < 25) {
         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
             if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
                 console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
                 child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
             }
-        }
-        multipartCreateResult = await s3.createMultipartUpload({
-            Bucket: config.AWS_S3_BUCKET_NAME,
-            Key: repo.full_name + ".zip",
-            StorageClass: "STANDARD",
-            ContentType: "application/zip",
-        }).promise();
+            const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-        fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`, 'r', function (err, fd) {
-            if (err) throw err;
-
-            function readNextChunk() {
-                fs.read(fd, buffer, 0, CHUNK_SIZE, null, async function (err, nread) {
-                    if (err) throw err;
-
-                    if (nread === 0) {
-                        // done reading file, do any necessary finalization steps
-                        fs.close(fd, function (err) {
-                            if (err) throw err;
-                        });
-                        return;
-                    }
-
-                    var data;
-
-                    if (nread < CHUNK_SIZE) {
-                        data = buffer.slice(0, nread);
-                    }
-                    else {
-                        data = buffer;
-                    }
-                    console.log(multipartCreateResult.UploadId + "\n");
-                    uploadPromiseResult = await s3.uploadPart({
-                        Body: data,
-                        Bucket: config.AWS_S3_BUCKET_NAME,
-                        Key: repo.full_name + ".zip",
-                        PartNumber: chunkCount,
-                        UploadId: multipartCreateResult.UploadId,
-                    }).promise()
-
-                    uploadPartResults.push({
-                        PartNumber: chunkCount,
-                        ETag: uploadPromiseResult.ETag
-                    })
-
-                    chunkCount++;
-
-                    readNextChunk()
-
-                });
-
+            const params = {
+                Bucket: config.AWS_S3_BUCKET_NAME,
+                Key: repo.full_name + ".zip",
+                Body: stream,
+                ContentType: contentType
+            };
+            
+            const options = {
+                partSize: 100 * 1024 * 1024,
+                    // how many concurrent uploads
+                queueSize: 5
+            };
+            
+            try {
+                await s3.upload(params, options).promise();
+                console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            } catch (error) {
+                console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
             }
-
-            readNextChunk();
-        });
-
-        completeUploadResponce = await s3.completeMultipartUpload({
-            Bucket: config.AWS_S3_BUCKET_NAME,
-            Key: repo.full_name + ".zip",
-            MultipartUpload: {
-                Parts: uploadPartResults
-            },
-            UploadId: multipartCreateResult.UploadId
-        }).promise();
+        }
     }
-
-
-    // if (repo.size / 1000 < 25) {
-    //     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-    //     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-    //         if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`))
-    //             child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-    //     }
-
-    //     multipartCreateResult = await s3.createMultipartUpload({
-    //         Bucket: config.AWS_S3_BUCKET_NAME,
-    //         Key: repo.full_name + ".zip",
-    //         StorageClass: "STANDARD",
-    //         ContentType: "application/zip",
-    //     }).promise()
-
-    //     fs.open(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}.zip`, 'r', function (err, fd) {
-    //         if (err) throw err;
-
-    //         function readNextChunk() {
-    //             fs.read(fd, buffer, 0, CHUNK_SIZE, null, async function (err, nread) {
-    //                 if (err) throw err;
-
-    //                 if (nread === 0) {
-    //                     // done reading file, do any necessary finalization steps
-    //                     fs.close(fd, function (err) {
-    //                         if (err) throw err;
-    //                     });
-    //                     return;
-    //                 }
-
-    //                 var data;
-
-    //                 if (nread < CHUNK_SIZE) {
-    //                     data = buffer.slice(0, nread);
-    //                 }
-    //                 else {
-    //                     data = buffer;
-    //                 }
-
-    //                 uploadPromiseResult = await s3.uploadPart({
-    //                     Body: data,
-    //                     Bucket: config.AWS_S3_BUCKET_NAME,
-    //                     Key: repo.full_name + ".zip",
-    //                     PartNumber: chunkCount,
-    //                     UploadId: multipartCreateResult.UploadId,
-    //                 }).promise()
-
-    //                 uploadPartResults.push({
-    //                     PartNumber: chunkCount,
-    //                     ETag: uploadPromiseResult.ETag
-    //                 })
-
-    //                 chunkCount++;
-
-    //                 readNextChunk()
-
-    //             });
-
-    //         }
-    //         readNextChunk();
-    //     });
-    //     console.log(`uploading ${repo.name}`);
-    //     completeUploadResponce = await s3.completeMultipartUpload({
-    //         Bucket: config.AWS_S3_BUCKET_NAME,
-    //         Key: repo.full_name + ".zip",
-    //         MultipartUpload: {
-    //             Parts: uploadPartResults
-    //         },
-    //         UploadId: multipartCreateResult.UploadId
-    //     }).promise()
-    // }
 }
+
+// async function localToS3(repo, index, repositoryCount) {
+//     let chunkCount = 1;
+//     var buffer = null;
+//     var startTime = new Date();
+//     var partNum = 0;
+//     var partSize = 1024 * 1024 * 5;
+//     var numPartsLeft = null
+//     var maxUploadTries = 3;
+//     var multiPartParams = {
+//         Bucket: config.AWS_S3_BUCKET_NAME,
+//         Key: repo.full_name + ".zip",
+//         ContentType: 'application/zip'
+//     };
+//     var multipartMap = {
+//         Parts: []
+//     };
+//     try {
+//         if (repo.size / 1000 < 25) {
+//             if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+//                 if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
+//                     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+//                     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+//                 }
+//             }
+//             buffer = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+//             s3.createMultipartUpload(multiPartParams, function (mpErr, multipart) {
+//                 if (mpErr) { console.log('Error!', mpErr); return; }
+//                 console.log("Got upload ID", multipart.UploadId);
+
+//                 // Grab each partSize chunk and upload it as a part
+//                 for (var rangeStart = 0; rangeStart < buffer.length; rangeStart += partSize) {
+//                     partNum++;
+//                     var end = Math.min(rangeStart + partSize, buffer.length),
+//                         partParams = {
+//                             Body: buffer.slice(rangeStart, end),
+//                             Bucket: config.AWS_S3_BUCKET_NAME,
+//                             Key: repo.full_name + ".zip",
+//                             PartNumber: String(partNum),
+//                             UploadId: multipart.UploadId
+//                         };
+
+//                     // Send a single part
+//                     console.log('Uploading part: #', partParams.PartNumber, ', Range start:', rangeStart);
+//                     console.log(buffer);
+//                     uploadPart(s3, multipart, partParams, null,buffer, partSize, multipartMap, repo);
+//                 }
+//             });
+//         }
+//     } catch (e) {
+//         console.log(e);
+//     }
+// }
+
+// function completeMultipartUpload(s3, doneParams, startTime) {
+//     s3.completeMultipartUpload(doneParams, function (err, data) {
+//         if (err) {
+//             console.log("An error occurred while completing the multipart upload");
+//             console.log(err);
+//         } else {
+//             var delta = (new Date() - startTime) / 1000;
+//             console.log('Completed upload in', delta, 'seconds');
+//             console.log('Final upload data:', data);
+//         }
+//     });
+// }
+
+// function uploadPart(s3, multipart, partParams, tryNum, buffer, partSize, multipartMap, repo) {
+//     numPartsLeft = Math.ceil(buffer.length / partSize);
+//     var tryNum = tryNum || 1;
+//     s3.uploadPart(partParams, function (multiErr, mData) {
+//         if (multiErr) {
+//             console.log('multiErr, upload part error:', multiErr);
+//             if (tryNum < maxUploadTries) {
+//                 console.log('Retrying upload of part: #', partParams.PartNumber)
+//                 uploadPart(s3, multipart, partParams, tryNum + 1, buffer, partSize, multipartMap, repo);
+//             } else {
+//                 console.log('Failed uploading part: #', partParams.PartNumber)
+//             }
+//             return;
+//         }
+//         multipartMap.Parts[this.request.params.PartNumber - 1] = {
+//             ETag: mData.ETag,
+//             PartNumber: Number(this.request.params.PartNumber)
+//         };
+//         console.log("Completed part", this.request.params.PartNumber);
+//         console.log('mData', mData);
+//         if (--numPartsLeft > 0) return; // complete only when all parts uploaded
+
+//         var doneParams = {
+//             Bucket: config.AWS_S3_BUCKET_NAME,
+//             Key: repo.full_name + ".zip",
+//             MultipartUpload: multipartMap,
+//             UploadId: multipart.UploadId
+//         };
+
+//         console.log("Completing upload...");
+//         completeMultipartUpload(s3, doneParams);
+//     });
+// }
+
 
 module.exports.init = async (m) => {
     mode = m;
@@ -389,7 +370,7 @@ module.exports.init = async (m) => {
         } else if (mode === 'cc')
             codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
         else if (mode === 's3')
-            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET });
+            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 10 });
     }
 
     await backupProcess();
