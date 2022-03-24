@@ -222,6 +222,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
 }
 
 async function localToS3(repo, index, repositoryCount){
+    console.log(`Creating ${repo.full_name}.zip`);
     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
     const fileContent = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
     const params = {
@@ -233,7 +234,7 @@ async function localToS3(repo, index, repositoryCount){
     };
 
     // Uploading files to the bucket
-    s3.upload(params, function(err, data) {
+    await s3.upload(params, function(err, data) {
         if (err) {
             throw err;
         }
