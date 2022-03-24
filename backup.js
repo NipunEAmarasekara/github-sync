@@ -269,7 +269,7 @@ async function localToS3(repo, index, repositoryCount) {
                     else {
                         data = buffer;
                     }
-                    console.log(multipartCreateResult.UploadId);
+                    console.log(multipartCreateResult.UploadId + "\n");
                     uploadPromiseResult = await s3.uploadPart({
                         Body: data,
                         Bucket: config.AWS_S3_BUCKET_NAME,
