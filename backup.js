@@ -42,7 +42,7 @@ async function getRepoList() {
         const organizations = await getOrganizations();
         if (!organizations.error) {
             await Promise.all(organizations.map(async (org) => {
-                const obj = await octokit.rest.repos.listForOrg({org: org.login, per_page: 10});
+                const obj = await octokit.rest.repos.listForOrg({org: org.login, per_page: 5});
                 obj.data.forEach(repo => {
                     repos.push(repo);
                 });
