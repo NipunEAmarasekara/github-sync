@@ -369,6 +369,7 @@ module.exports.init = async (m) => {
     }
 
     const result = await backupProcess();
+    console.log(result);
     // if (!result) {
     //     repositories.forEach(async (repo, index) => {
     //         if (mode === 's3' || mode === undefined)
