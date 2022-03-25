@@ -177,6 +177,8 @@ async function backupProcess() {
                 return null;
             }
         }, 2000);
+
+        count++;
     } catch (e) {
         return e;
     }
