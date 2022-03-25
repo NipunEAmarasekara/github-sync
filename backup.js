@@ -251,8 +251,8 @@ async function localToS3() {
                         }
                     }
                 }
-                ++count;
             }
+            ++count;
         });
     } catch (e) {
         console.log(e);
@@ -379,7 +379,7 @@ module.exports.init = async (m) => {
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
-        if (count === repositories.length) {
+        if (count === repositories.length - 1) {
             console.log('\n####################### Completed Github Backup Process #######################\n');
             clearInterval(interval);
             return null;
