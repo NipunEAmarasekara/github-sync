@@ -9,7 +9,7 @@ const Promise = require("bluebird");
 const mime = require('mime-types');
 const { spawn } = require('child_process');
 
-let options = { stdio: 'ignore' };
+let options = { stdio: 'pipe', shell: true };
 let mode = null;
 let codecommit = null;
 let s3 = null;
@@ -242,7 +242,7 @@ async function localToS3() {
                     };
 
                     try {
-                        await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 1 }).promise();
+                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
                         //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
                         console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
                     } catch (error) {
