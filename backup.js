@@ -369,7 +369,7 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    localToS3(repositories);
+    await localToS3(repositories);
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
