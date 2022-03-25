@@ -89,7 +89,7 @@ async function getRepoList() {
 //Github to Codecommit backup process
 async function backupProcess() {
     try {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             console.log('\n####################### Started Github Backup Process #######################\n');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
