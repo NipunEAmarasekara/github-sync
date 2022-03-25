@@ -3,6 +3,7 @@ GITHUB_ACCESS_TOKEN=redacted
 #Local backup path
 #Example: /home/username/
 LOCAL_BACKUP_PATH=redacted
+REPO_MAX_SIZE=redacted
 
 #Codecommit access info
 AWS_CC_ACCESS_KEY=redacted
