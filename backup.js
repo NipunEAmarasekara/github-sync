@@ -14,6 +14,7 @@ let mode = null;
 let codecommit = null;
 let s3 = null;
 let repositories = null;
+let count = 0;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -91,7 +92,6 @@ async function backupProcess() {
         console.log('\n####################### Started Github Backup Process #######################\n');
         repositories = await getRepoList();
         repositories = repositories.sort((a, b) => b.size - a.size);
-        let count = 0;
         repositories.forEach(async (repository, index) => {
             let username = repository.owner.login;
             let repo = repository.name;
