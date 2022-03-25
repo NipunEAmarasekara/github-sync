@@ -242,7 +242,7 @@ async function localToS3() {
                     };
 
                     try {
-                        await s3.upload(params, { partSize: 5 * 1024 * 1024, queueSize: 1 }).promise();
+                        await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 1 }).promise();
                         //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
                         console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
                     } catch (error) {
