@@ -369,13 +369,12 @@ module.exports.init = async (m) => {
     }
 
     const result = await backupProcess();
-    console.log(result);
-    // if (!result) {
-    //     repositories.forEach(async (repo, index) => {
-    //         if (mode === 's3' || mode === undefined)
-    //             //await copyReposToS3(repository, index, repositories.length);
-    //             await localToS3(repo, index, repositories.length);
-    //         count++;
-    //     });
-    // }
+    if (result === null) {
+        repositories.forEach(async (repo, index) => {
+            if (mode === 's3' || mode === undefined)
+                //await copyReposToS3(repository, index, repositories.length);
+                await localToS3(repo, index, repositories.length);
+            count++;
+        });
+    }
 };
