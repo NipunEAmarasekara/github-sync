@@ -223,7 +223,7 @@ async function copyReposToS3(repo, index, repositoryCount) {
 
 async function localToS3(repositories) {
     await backupProcess();
-    repositories.forEach(repo => {
+    repositories.forEach(async repo => {
         if (repo.size / 1000 < 25) {
             if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                 if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
@@ -369,7 +369,7 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    await localToS3(repositories);
+    localToS3(repositories);
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
