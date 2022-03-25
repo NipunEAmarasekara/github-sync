@@ -166,7 +166,7 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-
+            count++;
         });
 
         //Wait until the end of the backup process
@@ -177,8 +177,6 @@ async function backupProcess() {
                 return null;
             }
         }, 2000);
-
-        count++;
     } catch (e) {
         return e;
     }
