@@ -9,7 +9,7 @@ const Promise = require("bluebird");
 const mime = require('mime-types');
 const { spawn } = require('child_process');
 
-let options = { stdio: 'ignore', shell: false };
+let options = { stdio: 'ignore' };
 let mode = null;
 let codecommit = null;
 let s3 = null;
