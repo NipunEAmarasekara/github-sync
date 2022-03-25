@@ -13,6 +13,7 @@ let options = { stdio: 'pipe', shell: true };
 let mode = null;
 let codecommit = null;
 let s3 = null;
+let repositories = null;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -88,7 +89,7 @@ async function getRepoList() {
 async function backupProcess() {
     try {
         console.log('\n####################### Started Github Backup Process #######################\n');
-        let repositories = await getRepoList();
+        repositories = await getRepoList();
         repositories = repositories.sort((a, b) => b.size - a.size);
         let count = 0;
         repositories.forEach(async (repository, index) => {
@@ -166,13 +167,6 @@ async function backupProcess() {
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
             
-        });
-
-        repositories.forEach(async (repo,index) => {
-            if (mode === 's3' || mode === undefined)
-                //await copyReposToS3(repository, index, repositories.length);
-                await localToS3(repo, index, repositories.length);
-            count++;
         });
 
         //Wait until the end of the backup process
@@ -375,4 +369,11 @@ module.exports.init = async (m) => {
     }
 
     await backupProcess();
+
+    repositories.forEach(async (repo,index) => {
+        if (mode === 's3' || mode === undefined)
+            //await copyReposToS3(repository, index, repositories.length);
+            await localToS3(repo, index, repositories.length);
+        count++;
+    });
 };
