@@ -226,7 +226,7 @@ async function localToS3() {
         return new Promise(async (resolve, reject) => {
             await backupProcess();
             repositories.forEach(async repo => {
-                if (repo.size / 1000 < 100) {
+                if (repo.size / 1000 < 50) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                         if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
                             console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
