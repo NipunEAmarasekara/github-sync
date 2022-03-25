@@ -166,7 +166,7 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            
+
         });
 
         //Wait until the end of the backup process
@@ -240,9 +240,9 @@ async function localToS3(repo, index, repositoryCount) {
                 Body: stream,
                 ContentType: contentType
             };
-            
+
             try {
-                await s3.upload(params, {partSize: 100 * 1024 * 1024,queueSize: 5}).promise();
+                await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 5 }).promise();
                 child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
                 console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
             } catch (error) {
@@ -368,12 +368,13 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    await backupProcess();
-
-    repositories.forEach(async (repo,index) => {
-        if (mode === 's3' || mode === undefined)
-            //await copyReposToS3(repository, index, repositories.length);
-            await localToS3(repo, index, repositories.length);
-        count++;
-    });
+    const result = await backupProcess();
+    if (!result) {
+        repositories.forEach(async (repo, index) => {
+            if (mode === 's3' || mode === undefined)
+                //await copyReposToS3(repository, index, repositories.length);
+                await localToS3(repo, index, repositories.length);
+            count++;
+        });
+    }
 };
