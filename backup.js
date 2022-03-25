@@ -264,13 +264,6 @@ async function localToS3() {
     }
 }
 
-async function removeZipFiles() {
-    await localToS3();
-    repositories.forEach(repo => {
-        child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-    });
-}
-
 // async function localToS3(repo, index, repositoryCount) {
 //     let chunkCount = 1;
 //     var buffer = null;
@@ -387,7 +380,7 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    removeZipFiles();
+    localToS3();
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
