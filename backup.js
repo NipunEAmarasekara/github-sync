@@ -166,17 +166,7 @@ async function backupProcess() {
             }
             if (mode === 'none')
                 console.log(`[✓] ${repo} Repository locally synced.\n`);
-            count++;
         });
-
-        //Wait until the end of the backup process
-        const interval = setInterval(function () {
-            if (count === repositories.length) {
-                console.log('\n####################### Completed Github Backup Process #######################\n');
-                clearInterval(interval);
-                return null;
-            }
-        }, 2000);
     } catch (e) {
         return e;
     }
@@ -377,4 +367,13 @@ module.exports.init = async (m) => {
             count++;
         });
     }
+
+    //Wait until the end of the backup process
+    const interval = setInterval(function () {
+        if (count === repositories.length) {
+            console.log('\n####################### Completed Github Backup Process #######################\n');
+            clearInterval(interval);
+            return null;
+        }
+    }, 2000);
 };
