@@ -180,7 +180,7 @@ async function localToS3() {
             repositories.forEach(async repo => {
                 if (repoUpdated(repo)) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                        createTheZipFile().then(result => {
+                        createTheZipFile().then(async result => {
                             const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
                             const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
     
