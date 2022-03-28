@@ -163,6 +163,8 @@ async function localToCC() {
                     if (mode === 'none')
                         console.log(`[✓] ${repo} Repository locally synced.\n`);
 
+                } else {
+                    console.log(`${repo.name} repository refresh skipped.`);
                 }
             });
             setTimeout(() => {
