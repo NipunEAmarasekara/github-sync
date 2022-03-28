@@ -164,7 +164,7 @@ async function localToCC() {
                         console.log(`[✓] ${repo} Repository locally synced.\n`);
 
                 } else {
-                    console.log(`${repo.name} repository refresh skipped.`);
+                    console.log(`${repository.name} repository refresh skipped.`);
                 }
             });
             setTimeout(() => {
