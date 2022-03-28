@@ -182,7 +182,7 @@ async function localToS3() {
         return new Promise(async (resolve, reject) => {
             await localToCC();
             repositories.forEach(async repo => {
-                if (repoUpdated(repo)) {
+                if (repoUpdated(repo) || !(await objectExistsInS3(repo))) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                         createTheZipFile(repo).then(async () => {
                             const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
@@ -250,6 +250,25 @@ module.exports.init = async (m) => {
 
 function repoUpdated(repo) {
     return (new Date(repo.pushed_at) < new Date(new Date().getTime() - 24 * 60 * 60 * 1000)) ? false : true;
+}
+
+async function objectExistsInS3(repo) {
+    const exists = await s3
+        .headObject({
+            Bucket: config.AWS_S3_BUCKET_NAME,
+            Key: repo.full_name + ".zip",
+        })
+        .promise()
+        .then(
+            () => true,
+            err => {
+                if (err.code === 'NotFound') {
+                    return false;
+                }
+                throw err;
+            }
+        );
+    return exists;
 }
 
 // //Default repository only
