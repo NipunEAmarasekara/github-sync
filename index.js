@@ -4,6 +4,8 @@ const cron = require('node-cron');
 const app = express();
 const port = 8080
 
+let output = true;
+
 async function scheduler(mode) {
   //Time format -> min hour day-of-month month day-of-week
   // 0 0 * * * = midnight
@@ -23,16 +25,20 @@ async function onetime(mode) {
 
 const server = app.listen(port, async () => {
   //Check for modes
-  try {
-    const args = process.argv.slice(2);
-    if (args.length === 0) {
-      await scheduler();
-    } else if (args.filter(arg => arg === 'onetime').length) {
-      await onetime(args.filter(arg => arg !== 'onetime')[0]);
-    } else {
-      await scheduler(args[0]);
+  do {
+    try {
+      const args = process.argv.slice(2);
+      if (args.length === 0) {
+        await scheduler();
+      } else if (args.filter(arg => arg === 'onetime').length) {
+        await onetime(args.filter(arg => arg !== 'onetime')[0]);
+      } else {
+        await scheduler(args[0]);
+      }
+      output = false;
+    } catch (e) {
+      console.log(e);
+      output = true;
     }
-  } catch (e) {
-    console.log(e);
-  }
+  } while (output);
 });
