@@ -14,7 +14,6 @@ let mode = null;
 let codecommit = null;
 let s3 = null;
 let repositories = null;
-let count = 0;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -199,7 +198,7 @@ async function localToS3() {
                             try {
                                 await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
                                 child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                                console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                                console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded`);
                             } catch (error) {
                                 console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
                             }
@@ -208,7 +207,6 @@ async function localToS3() {
                 } else {
                     console.log(`${repo.name} repository upload skipped.`);
                 }
-                ++count;
             });
             setTimeout(() => {
                 resolve();
