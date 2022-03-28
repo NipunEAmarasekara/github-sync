@@ -180,25 +180,25 @@ async function localToS3() {
             repositories.forEach(async repo => {
                 if (repoUpdated(repo)) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/ && zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${repo.owner.login}/${repo.name}`, options);
-                        const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                        const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-
-                        const params = {
-                            Bucket: config.AWS_S3_BUCKET_NAME,
-                            Key: repo.full_name + ".zip",
-                            Body: stream,
-                            ContentType: contentType
-                        };
-
-                        try {
-                            await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                            child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                            console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                        } catch (error) {
-                            console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
-                        }
+                        createTheZipFile().then(result => {
+                            const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                            const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+    
+                            const params = {
+                                Bucket: config.AWS_S3_BUCKET_NAME,
+                                Key: repo.full_name + ".zip",
+                                Body: stream,
+                                ContentType: contentType
+                            };
+    
+                            try {
+                                await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                                child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                                console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                            } catch (error) {
+                                console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                            }
+                        });
                     }
                 } else {
                     console.log(`${repo.name} repository upload skipped.`);
@@ -214,6 +214,11 @@ async function localToS3() {
     } catch (e) {
         console.log(e);
     }
+}
+
+async function createTheZipFile(repo){
+    console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/ && zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${repo.owner.login}/${repo.name}`, options);
 }
 
 async function backupProcess() {
@@ -239,49 +244,49 @@ module.exports.init = async (m) => {
     });
 };
 
-//Default repository only
-async function directGitToS3(repo, index, repositoryCount) {
-    try {
-        console.log(`${repo.name} : ${index}/${repositoryCount} : size: ${(repo.size / 1000).toFixed(2)}MB`);
-        const uploader = Promise.promisify(s3.upload.bind(s3));
-        const passThroughStream = new stream.PassThrough();
-        const arhiveURL =
-            `https://api.github.com/repos/${repo.full_name}/zipball/${repo.default_branch}?access_token=${config.GITHUB_ACCESS_TOKEN}`;
-        const requestOptions = {
-            url: arhiveURL,
-            headers: {
-                "User-Agent": "nodejs",
-                "Authorization": `token ${config.GITHUB_ACCESS_TOKEN}`,
-            }
-        };
-        await new Promise((resolve, reject) => {
-            request(requestOptions, function (error, response, body) {
-                if (error) {
-                    reject(error);
-                    throw new Error(error);
-                }
-                resolve("done");
-            }).pipe(passThroughStream);
-        });
-        const bucketName = config.AWS_S3_BUCKET_NAME;
-        const objectName = repo.full_name + ".zip";
-        const params = {
-            Bucket: bucketName,
-            Key: objectName,
-            Body: passThroughStream,
-            //StorageClass: options.s3StorageClass || "STANDARD",
-            StorageClass: "STANDARD",
-            ServerSideEncryption: "AES256"
-        };
-
-        return uploader(params).then(result => {
-            console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
-        });
-    } catch (e) {
-        console.log(e);
-    }
-}
-
 function repoUpdated(repo) {
     return (new Date(repo.pushed_at) < new Date(new Date().getTime() - 24 * 60 * 60 * 1000)) ? false : true;
 }
+
+// //Default repository only
+// async function directGitToS3(repo, index, repositoryCount) {
+//     try {
+//         console.log(`${repo.name} : ${index}/${repositoryCount} : size: ${(repo.size / 1000).toFixed(2)}MB`);
+//         const uploader = Promise.promisify(s3.upload.bind(s3));
+//         const passThroughStream = new stream.PassThrough();
+//         const arhiveURL =
+//             `https://api.github.com/repos/${repo.full_name}/zipball/${repo.default_branch}?access_token=${config.GITHUB_ACCESS_TOKEN}`;
+//         const requestOptions = {
+//             url: arhiveURL,
+//             headers: {
+//                 "User-Agent": "nodejs",
+//                 "Authorization": `token ${config.GITHUB_ACCESS_TOKEN}`,
+//             }
+//         };
+//         await new Promise((resolve, reject) => {
+//             request(requestOptions, function (error, response, body) {
+//                 if (error) {
+//                     reject(error);
+//                     throw new Error(error);
+//                 }
+//                 resolve("done");
+//             }).pipe(passThroughStream);
+//         });
+//         const bucketName = config.AWS_S3_BUCKET_NAME;
+//         const objectName = repo.full_name + ".zip";
+//         const params = {
+//             Bucket: bucketName,
+//             Key: objectName,
+//             Body: passThroughStream,
+//             //StorageClass: options.s3StorageClass || "STANDARD",
+//             StorageClass: "STANDARD",
+//             ServerSideEncryption: "AES256"
+//         };
+
+//         return uploader(params).then(result => {
+//             console.log(`[✓] ${repo.full_name} Repository synced to s3.\n`)
+//         });
+//     } catch (e) {
+//         console.log(e);
+//     }
+// }
