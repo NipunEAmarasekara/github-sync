@@ -201,7 +201,7 @@ async function localToS3() {
                             });
                         }
                     } else {
-                        console.log(`${repo.name} repository s3 upload skipped.`);
+                        console.log(`${repo.name} repository s3 upload skipped. Latest version already exists.`);
                     }
                 });
             }
