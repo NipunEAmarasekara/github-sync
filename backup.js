@@ -184,33 +184,35 @@ async function localToS3() {
     try {
         return new Promise(async (resolve, reject) => {
             await localToCC();
-            repositories.forEach(async repo => {
-                if (repoUpdated(repo) || !(await objectExistsInS3(repo))) {
-                    if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                        createTheZipFile(repo).then(async () => {
-                            const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                            const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            if (mode === s3) {
+                repositories.forEach(async repo => {
+                    if (repoUpdated(repo) || !(await objectExistsInS3(repo))) {
+                        if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+                            createTheZipFile(repo).then(async () => {
+                                const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                                const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                            const params = {
-                                Bucket: config.AWS_S3_BUCKET_NAME,
-                                Key: repo.full_name + ".zip",
-                                Body: stream,
-                                ContentType: contentType
-                            };
+                                const params = {
+                                    Bucket: config.AWS_S3_BUCKET_NAME,
+                                    Key: repo.full_name + ".zip",
+                                    Body: stream,
+                                    ContentType: contentType
+                                };
 
-                            try {
-                                await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                                child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                                console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded`);
-                            } catch (error) {
-                                console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
-                            }
-                        });
+                                try {
+                                    await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                                    child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                                    console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded`);
+                                } catch (error) {
+                                    console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                                }
+                            });
+                        }
+                    } else {
+                        console.log(`${repo.name} repository upload skipped.`);
                     }
-                } else {
-                    console.log(`${repo.name} repository upload skipped.`);
-                }
-            });
+                });
+            }
             setTimeout(() => {
                 resolve();
                 ;
