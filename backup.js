@@ -14,6 +14,7 @@ let mode = null;
 let codecommit = null;
 let s3 = null;
 let repositories = null;
+let codeCommitRepoExists = null;
 
 //Initialize github api
 const octokit = new Octokit({
@@ -86,6 +87,9 @@ async function localToCC() {
             console.log('\n####################### Started Github Backup Process #######################\n');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
+            codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                console.log(data);
+            });
             repositories.forEach(async (repository, index) => {
                 if (repoUpdated(repository) || !fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`)) {
                     let username = repository.owner.login;
