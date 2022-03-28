@@ -183,135 +183,36 @@ async function localToS3() {
     try {
         await backupProcess();
         repositories.forEach(async repo => {
-            if (repo.size / 1000 < config.REPO_MAX_SIZE) {
-                if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                    console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                    child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-                    const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            child_process.execSync(`zip -r ${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+            // if (repo.size / 1000 < config.REPO_MAX_SIZE) {
+            //     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+            //         console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+            //         child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+            //         const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            //         const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                    const params = {
-                        Bucket: config.AWS_S3_BUCKET_NAME,
-                        Key: repo.full_name + ".zip",
-                        Body: stream,
-                        ContentType: contentType
-                    };
+            //         const params = {
+            //             Bucket: config.AWS_S3_BUCKET_NAME,
+            //             Key: repo.full_name + ".zip",
+            //             Body: stream,
+            //             ContentType: contentType
+            //         };
 
-                    try {
-                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                        console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    } catch (error) {
-                        console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
-                    }
-                }
-            }
+            //         try {
+            //             await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+            //             //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+            //             console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            //         } catch (error) {
+            //             console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+            //         }
+            //     }
+            // }
             ++count;
         });
     } catch (e) {
         console.log(e);
     }
 }
-
-// async function localToS3(repo, index, repositoryCount) {
-//     let chunkCount = 1;
-//     var buffer = null;
-//     var startTime = new Date();
-//     var partNum = 0;
-//     var partSize = 1024 * 1024 * 5;
-//     var numPartsLeft = null
-//     var maxUploadTries = 3;
-//     var multiPartParams = {
-//         Bucket: config.AWS_S3_BUCKET_NAME,
-//         Key: repo.full_name + ".zip",
-//         ContentType: 'application/zip'
-//     };
-//     var multipartMap = {
-//         Parts: []
-//     };
-//     try {
-//         if (repo.size / 1000 < 25) {
-//             if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-//                 if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-//                     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-//                     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-//                 }
-//             }
-//             buffer = fs.readFileSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-//             s3.createMultipartUpload(multiPartParams, function (mpErr, multipart) {
-//                 if (mpErr) { console.log('Error!', mpErr); return; }
-//                 console.log("Got upload ID", multipart.UploadId);
-
-//                 // Grab each partSize chunk and upload it as a part
-//                 for (var rangeStart = 0; rangeStart < buffer.length; rangeStart += partSize) {
-//                     partNum++;
-//                     var end = Math.min(rangeStart + partSize, buffer.length),
-//                         partParams = {
-//                             Body: buffer.slice(rangeStart, end),
-//                             Bucket: config.AWS_S3_BUCKET_NAME,
-//                             Key: repo.full_name + ".zip",
-//                             PartNumber: String(partNum),
-//                             UploadId: multipart.UploadId
-//                         };
-
-//                     // Send a single part
-//                     console.log('Uploading part: #', partParams.PartNumber, ', Range start:', rangeStart);
-//                     console.log(buffer);
-//                     uploadPart(s3, multipart, partParams, null,buffer, partSize, multipartMap, repo);
-//                 }
-//             });
-//         }
-//     } catch (e) {
-//         console.log(e);
-//     }
-// }
-
-// function completeMultipartUpload(s3, doneParams, startTime) {
-//     s3.completeMultipartUpload(doneParams, function (err, data) {
-//         if (err) {
-//             console.log("An error occurred while completing the multipart upload");
-//             console.log(err);
-//         } else {
-//             var delta = (new Date() - startTime) / 1000;
-//             console.log('Completed upload in', delta, 'seconds');
-//             console.log('Final upload data:', data);
-//         }
-//     });
-// }
-
-// function uploadPart(s3, multipart, partParams, tryNum, buffer, partSize, multipartMap, repo) {
-//     numPartsLeft = Math.ceil(buffer.length / partSize);
-//     var tryNum = tryNum || 1;
-//     s3.uploadPart(partParams, function (multiErr, mData) {
-//         if (multiErr) {
-//             console.log('multiErr, upload part error:', multiErr);
-//             if (tryNum < maxUploadTries) {
-//                 console.log('Retrying upload of part: #', partParams.PartNumber)
-//                 uploadPart(s3, multipart, partParams, tryNum + 1, buffer, partSize, multipartMap, repo);
-//             } else {
-//                 console.log('Failed uploading part: #', partParams.PartNumber)
-//             }
-//             return;
-//         }
-//         multipartMap.Parts[this.request.params.PartNumber - 1] = {
-//             ETag: mData.ETag,
-//             PartNumber: Number(this.request.params.PartNumber)
-//         };
-//         console.log("Completed part", this.request.params.PartNumber);
-//         console.log('mData', mData);
-//         if (--numPartsLeft > 0) return; // complete only when all parts uploaded
-
-//         var doneParams = {
-//             Bucket: config.AWS_S3_BUCKET_NAME,
-//             Key: repo.full_name + ".zip",
-//             MultipartUpload: multipartMap,
-//             UploadId: multipart.UploadId
-//         };
-
-//         console.log("Completing upload...");
-//         completeMultipartUpload(s3, doneParams);
-//     });
-// }
 
 //Default repository only
 async function directGitToS3(repo, index, repositoryCount) {
