@@ -39,6 +39,7 @@ const server = app.listen(port, async () => {
     } catch (e) {
       console.log(e);
       output = true;
+      continue;
     }
   } while (output);
 });
