@@ -16,8 +16,6 @@
     ],
     "scripts": "*.js",
     "targets": [
-      "node14-macos-x64",
-      "node14-win-x64",
       "node14-linux-x64"
     ],
     "outputPath": "dist"
@@ -27,6 +25,7 @@
     "@supercharge/promise-pool": "^2.1.0",
     "aws-sdk": "^2.1092.0",
     "axios": "^0.26.1",
+    "bluebird": "^3.7.2",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "node-cron": "^3.0.0",

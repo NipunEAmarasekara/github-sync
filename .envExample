@@ -8,3 +8,7 @@ LOCAL_BACKUP_PATH=redacted
 AWS_CC_ACCESS_KEY=redacted
 AWS_CC_ACCESS_SECRET=redacted
 #Setup ssh with AWS_CC_SSH_KEY
+
+#S3 Bucket
+AWS_S3_BUCKET_NAME=redacted
+AWS_S3_STORAGE_CLASS=redacted
