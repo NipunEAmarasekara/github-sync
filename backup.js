@@ -91,9 +91,9 @@ async function localToCC() {
                 let username = repository.owner.login;
                 let repo = repository.name;
                 codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                    console.log(data);
+                    codeCommitRepoExists = (data === null) ? false : true;
                 });
-                if (repoUpdated(repository) || !fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`)) {
+                if (repoUpdated(repository) || !fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`) || !codeCommitRepoExists) {
                     //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
                     if (mode === 'cc' || mode === undefined) {
                         codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
