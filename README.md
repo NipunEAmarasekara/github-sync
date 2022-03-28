@@ -22,24 +22,24 @@ Express application to backup github repositories to aws codecommit
         AWS_CC_ACCESS_KEY
         AWS_CC_ACCESS_SECRET
 
-    Commands
+# Commands
 
-        Execute the sync program only one time but syncs to all systems (Testing purposes)
+    Execute the sync program only one time but syncs to all systems (Testing purposes)
             
-            ./executable onetime
+        ./executable onetime
 
-        Execute the sync program only one time but syncs to a specific system (cc = codecommit)
+    Execute the sync program only one time but syncs to a specific system (cc = codecommit)
 
-            ./executable onetime ( s3/cc )
+        ./executable onetime ( s3/cc )
 
-        Execute the sync program only one time but syncs to local only
+    Execute the sync program only one time but syncs to local only
 
-            ./executable onetime none
+        ./executable onetime none
 
-        Execute the sync program using the scheduler.
+    Execute the sync program using the scheduler.
 
-            ./executable
+        ./executable
 
-            ./executable ( s3/cc )
+        ./executable ( s3/cc )
 
-            ./executable none
+        ./executable none
