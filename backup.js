@@ -234,6 +234,7 @@ module.exports.init = async (m) => {
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
+        console.log(`Count: ${count}, Repository Count: ${repositories.length - 1}`);
         if (count === repositories.length - 1) {
             console.log('\n####################### Completed Github Backup Process #######################\n');
             clearInterval(interval);
