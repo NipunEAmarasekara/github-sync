@@ -87,14 +87,13 @@ async function localToCC() {
             console.log('\n####################### Started Github Backup Process #######################\n');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
-            codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                console.log(data);
-            });
             repositories.forEach(async (repository, index) => {
+                let username = repository.owner.login;
+                let repo = repository.name;
+                codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                    console.log(data);
+                });
                 if (repoUpdated(repository) || !fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name}`)) {
-                    let username = repository.owner.login;
-                    let repo = repository.name;
-
                     //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
                     if (mode === 'cc' || mode === undefined) {
                         codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
