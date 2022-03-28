@@ -35,7 +35,7 @@ async function getOrganizations() {
         }
     } catch (e) {
         console.log(e);
-        this.writeLog(e);
+        writeLog(e);
         return null;
     }
 }
@@ -77,7 +77,7 @@ async function getRepoList() {
         }
     } catch (e) {
         console.log(e);
-        this.writeLog(e);
+        writeLog(e);
         return null;
     }
 }
@@ -87,7 +87,7 @@ async function localToCC() {
     try {
         return new Promise(async (resolve, reject) => {
             console.log('\n####################### Started Github Backup Process #######################\n');
-            this.writeLog('####################### Started Github Backup Process #######################');
+            writeLog('####################### Started Github Backup Process #######################');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
             repositories.forEach(async (repository, index) => {
@@ -105,7 +105,7 @@ async function localToCC() {
                                         child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
                                 } else
                                     child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
-                                this.writeLog(`${repository.full_name} repository created in codecommit.`);
+                                writeLog(`${repository.full_name} repository created in codecommit.`);
                             }
                         }
                     });
@@ -118,7 +118,7 @@ async function localToCC() {
                     await syncBranchesToLocal(username, repo, branch).then(() => {
                         if (mode === 'cc' || mode === undefined){
                             child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} ${branch.name}`, options);
-                            this.writeLog(`${branch.name} branch synced to codecommit in ${repository.full_name} repository.`);
+                            writeLog(`${branch.name} branch synced to codecommit in ${repository.full_name} repository.`);
                         }
                     });
                 });
@@ -131,12 +131,12 @@ async function localToCC() {
                                 codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
                                     if (err === null){
                                         console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
-                                        this.writeLog(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
+                                        writeLog(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
                                     }
                                 });
                             } catch (e) {
                                 console.log(e);
-                                this.writeLog(e);
+                                writeLog(e);
                             }
                         }
                     });
@@ -148,21 +148,21 @@ async function localToCC() {
                                 codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
                                     if (err === null){
                                         console.log(`${cb} branch removed from codecommit.`);
-                                        this.writeLog(`${cb} branch removed from codecommit.`);
+                                        writeLog(`${cb} branch removed from codecommit.`);
                                     }else{
                                         console.log(err);
-                                        this.writeLog(err);
+                                        writeLog(err);
                                     }
                                 });
                             }
                         });
                     });
                     console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
-                    this.writeLog(`[✓] ${repo} Repository synced to codecommit.\n`);
+                    writeLog(`[✓] ${repo} Repository synced to codecommit.\n`);
                 }
                 if (mode === 'none')
                     console.log(`[✓] ${repo} Repository locally synced.\n`);
-                    this.writeLog(`[✓] ${repo} Repository locally synced.\n`);
+                    writeLog(`[✓] ${repo} Repository locally synced.\n`);
             });
             setTimeout(() => {
                 resolve();
@@ -172,7 +172,7 @@ async function localToCC() {
         });
     } catch (e) {
         console.log(e);
-        this.writeLog(e);
+        writeLog(e);
         return e;
     }
 }
@@ -200,16 +200,16 @@ async function localToS3() {
                                     await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
                                     child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
                                     console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded to s3`);
-                                    this.writeLog(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded to s3`);
+                                    writeLog(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded to s3`);
                                 } catch (error) {
                                     console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
-                                    this.writeLog(`upload ERROR: ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                                    writeLog(`upload ERROR: ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
                                 }
                             });
                         }
                     } else {
                         console.log(`${repo.name} repository s3 upload skipped. Latest version already exists.`);
-                        this.writeLog(`${repo.name} repository s3 upload skipped. Latest version already exists.`);
+                        writeLog(`${repo.name} repository s3 upload skipped. Latest version already exists.`);
                     }
                 });
             }
@@ -221,30 +221,30 @@ async function localToS3() {
         });
     } catch (e) {
         console.log(e);
-        this.writeLog(e);
+        writeLog(e);
     }
 }
 
 //Create a zip file of the repository
 async function createTheZipFile(repo) {
     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-    this.writeLog(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+    writeLog(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
     child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/ && zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${repo.owner.login}/${repo.name}`, options);
 }
 
 async function syncBranchesToLocal(username, repo, branch) {
     if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
         console.log(`clonning ${repo} repository`);
-        this.writeLog(`clonning ${repo} repository`);
+        writeLog(`clonning ${repo} repository`);
         child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
         console.log(`${repo} repository cloned`);
-        this.writeLog(`${repo} repository cloned`);
+        writeLog(`${repo} repository cloned`);
     } else {
         //child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
         spawn(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, [], options);
         console.log(`${repo}:${branch.name} refreshed`);
-        this.writeLog(`${repo}:${branch.name} refreshed`);
+        writeLog(`${repo}:${branch.name} refreshed`);
     }
 }
 
@@ -267,7 +267,7 @@ module.exports.init = async (m) => {
 
     backupProcess().then(() => {
         console.log('\n####################### Completed Github Backup Process #######################\n');
-        this.writeLog('####################### Completed Github Backup Process #######################');
+        writeLog('####################### Completed Github Backup Process #######################');
         return null;
     });
 };
