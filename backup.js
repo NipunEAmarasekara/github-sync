@@ -194,14 +194,14 @@ async function localToS3() {
                                 try {
                                     await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
                                     child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                                    console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded`);
+                                    console.log(`[✓] ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip uploaded to s3`);
                                 } catch (error) {
                                     console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
                                 }
                             });
                         }
                     } else {
-                        console.log(`${repo.name} repository upload skipped.`);
+                        console.log(`${repo.name} repository s3 upload skipped.`);
                     }
                 });
             }
