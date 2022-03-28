@@ -239,10 +239,9 @@ async function syncBranchesToLocal(username, repo, branch) {
         child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
         console.log(`${repo} repository cloned`);
     } else {
-        console.log(`${repo}:${branch.name} refreshed`);
         //child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
         spawn(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, [], options);
-        console.log(`${repo} repository refreshed`);
+        console.log(`${repo}:${branch.name} refreshed`);
     }
 }
 
