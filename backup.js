@@ -176,7 +176,7 @@ async function localToS3() {
     try {
         return new Promise(async (resolve, reject) => {
             await localToCC();
-            if (mode === 's3') {
+            if (mode === 's3' || mode === undefined) {
                 repositories.forEach(async repo => {
                     if (repoUpdated(repo) || !(await objectExistsInS3(repo))) {
                         if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
