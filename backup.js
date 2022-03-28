@@ -198,8 +198,8 @@ async function localToS3() {
                     };
 
                     try {
-                        await s3.upload(params, { partSize: 100 * 1024 * 1024, queueSize: 5 }).promise();
-                        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                        child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
                         console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
                     } catch (error) {
                         console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
@@ -212,6 +212,31 @@ async function localToS3() {
         console.log(e);
     }
 }
+
+module.exports.init = async (m) => {
+    mode = m;
+
+    //Initialize aws, codecommit and s3
+    if (mode !== 'none') {
+        aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
+        if (mode === 'cc' || mode === undefined)
+            codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
+
+        if (mode === 's3' || mode === undefined)
+            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
+    }
+
+    await localToS3();
+
+    //Wait until the end of the backup process
+    const interval = setInterval(function () {
+        if (count === repositories.length - 1) {
+            console.log('\n####################### Completed Github Backup Process #######################\n');
+            clearInterval(interval);
+            return null;
+        }
+    }, 2000);
+};
 
 //Default repository only
 async function directGitToS3(repo, index, repositoryCount) {
@@ -255,28 +280,3 @@ async function directGitToS3(repo, index, repositoryCount) {
         console.log(e);
     }
 }
-
-module.exports.init = async (m) => {
-    mode = m;
-
-    //Initialize aws, codecommit and s3
-    if (mode !== 'none') {
-        aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
-        if (mode === 'cc' || mode === undefined)
-            codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
-
-        if (mode === 's3' || mode === undefined)
-            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
-    }
-
-    await localToS3();
-
-    //Wait until the end of the backup process
-    const interval = setInterval(function () {
-        if (count === repositories.length - 1) {
-            console.log('\n####################### Completed Github Backup Process #######################\n');
-            clearInterval(interval);
-            return null;
-        }
-    }, 2000);
-};
