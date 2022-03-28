@@ -87,7 +87,7 @@ async function localToCC() {
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
             repositories.forEach(async (repository, index) => {
-                if (repoUpdated(repository)) {
+                if (repoUpdated(repository) || !fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                     let username = repository.owner.login;
                     let repo = repository.name;
 
