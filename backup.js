@@ -167,10 +167,10 @@ async function backupProcess() {
                 }
                 if (mode === 'none')
                     console.log(`[✓] ${repo} Repository locally synced.\n`);
-                    if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-                        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                        child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-                    }
+                if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
+                    console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+                    child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+                }
             });
             setTimeout(() => {
                 resolve();
@@ -187,30 +187,28 @@ async function localToS3() {
     try {
         await backupProcess();
         repositories.forEach(async repo => {
-            if (repo.name !== 'installers') {
-                if (repo.size / 1000 < config.REPO_MAX_SIZE) {
-                    if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                        // if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-                        //     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                        //     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-                        // }
-                        const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                        const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            if (repo.size / 1000 < config.REPO_MAX_SIZE) {
+                if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+                    // if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
+                    //     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+                    //     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+                    // }
+                    const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                    const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                        const params = {
-                            Bucket: config.AWS_S3_BUCKET_NAME,
-                            Key: repo.full_name + ".zip",
-                            Body: stream,
-                            ContentType: contentType
-                        };
+                    const params = {
+                        Bucket: config.AWS_S3_BUCKET_NAME,
+                        Key: repo.full_name + ".zip",
+                        Body: stream,
+                        ContentType: contentType
+                    };
 
-                        try {
-                            await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                            //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                            console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                        } catch (error) {
-                            console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
-                        }
+                    try {
+                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                        console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                    } catch (error) {
+                        console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
                     }
                 }
             }
@@ -383,10 +381,8 @@ module.exports.init = async (m) => {
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
-        if (count === repositories.length - 1) {
-            console.log('\n####################### Completed Github Backup Process #######################\n');
-            clearInterval(interval);
-            return null;
-        }
+        console.log('\n####################### Completed Github Backup Process #######################\n');
+        clearInterval(interval);
+        return null;
     }, 2000);
 };
