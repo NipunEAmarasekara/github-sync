@@ -295,7 +295,7 @@ async function objectExistsInS3(repo) {
     return exists;
 }
 
-module.exports.writeLog = (text) => {
+var writeLog = (text) => {
     if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/.syncLog`)) {
         fs.writeFile(`${config.LOCAL_BACKUP_PATH}/.syncLog`, `${text}\r\n`, function (err) {
             if (err) throw err;
@@ -306,6 +306,8 @@ module.exports.writeLog = (text) => {
         });
     }
 }
+
+exports.writeLog = writeLog;
 
 // //Default repository only
 // async function directGitToS3(repo, index, repositoryCount) {
