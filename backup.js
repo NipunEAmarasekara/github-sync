@@ -45,12 +45,6 @@ async function getRepoList() {
     try {
         const organizations = await getOrganizations();
         if (!organizations.error) {
-            // await Promise.all(organizations.map(async (org) => {
-            //     const obj = await octokit.rest.repos.listForOrg({ org: org.login, per_page: 100});
-            //     obj.data.forEach(repo => {
-            //         repos.push(repo);
-            //     });
-            // }));
             await Promise.all(organizations.map(async (org) => {
                 await octokit.paginate(
                     octokit.repos.listForOrg,
@@ -87,7 +81,7 @@ async function getRepoList() {
 }
 
 //Github to Codecommit backup process
-async function backupProcess() {
+async function localToCC() {
     try {
         return new Promise(async (resolve, reject) => {
             console.log('\n####################### Started Github Backup Process #######################\n');
@@ -181,38 +175,49 @@ async function backupProcess() {
 
 async function localToS3() {
     try {
-        await backupProcess();
-        repositories.forEach(async repo => {
-            if (repoUpdated(repo)) {
-                if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                    console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                    child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/ && zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${repo.owner.login}/${repo.name}`, options);
-                    const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+        return new Promise(async (resolve, reject) => {
+            await localToCC();
+            repositories.forEach(async repo => {
+                if (repoUpdated(repo)) {
+                    if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+                        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/ && zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${repo.owner.login}/${repo.name}`, options);
+                        const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                        const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                    const params = {
-                        Bucket: config.AWS_S3_BUCKET_NAME,
-                        Key: repo.full_name + ".zip",
-                        Body: stream,
-                        ContentType: contentType
-                    };
+                        const params = {
+                            Bucket: config.AWS_S3_BUCKET_NAME,
+                            Key: repo.full_name + ".zip",
+                            Body: stream,
+                            ContentType: contentType
+                        };
 
-                    try {
-                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                        child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                        console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    } catch (error) {
-                        console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                        try {
+                            await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                            child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                            console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                        } catch (error) {
+                            console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                        }
                     }
+                } else {
+                    console.log(`${repo.name} repository upload skipped.`);
                 }
-            } else {
-                console.log(`${repo.name} repository upload skipped.`);
-            }
-            ++count;
+                ++count;
+            });
+            setTimeout(() => {
+                resolve();
+                ;
+            }, 5000
+            );
         });
     } catch (e) {
         console.log(e);
     }
+}
+
+async function backupProcess() {
+    await localToS3();
 }
 
 module.exports.init = async (m) => {
@@ -228,7 +233,7 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    await localToS3();
+    backupProcess();
 
     //Wait until the end of the backup process
     const interval = setInterval(function () {
