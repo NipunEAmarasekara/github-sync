@@ -178,6 +178,8 @@ async function localToS3() {
         return new Promise(async (resolve, reject) => {
             await localToCC();
             repositories.forEach(async repo => {
+                if(repo.name === 'central-station')
+                    console.log(repo);
                 if (repoUpdated(repo)) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                         console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
