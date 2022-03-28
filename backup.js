@@ -94,83 +94,81 @@ async function backupProcess() {
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
             repositories.forEach(async (repository, index) => {
-                let username = repository.owner.login;
-                let repo = repository.name;
+                if (repository.name === 'installers') {
+                    let username = repository.owner.login;
+                    let repo = repository.name;
 
-                //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
-                if (mode === 'cc' || mode === undefined) {
-                    codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                        if (err) {
-                            if (err.code === 'RepositoryDoesNotExistException') {
-                                if (repository.description) {
-                                    if (repository.description != "")
-                                        child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
-                                    else
+                    //Check if the repository exists on codecommit.Create a repository if it doesn't exists.
+                    if (mode === 'cc' || mode === undefined) {
+                        codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                            if (err) {
+                                if (err.code === 'RepositoryDoesNotExistException') {
+                                    if (repository.description) {
+                                        if (repository.description != "")
+                                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
+                                        else
+                                            child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
+                                    } else
                                         child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
-                                } else
-                                    child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
-                            }
-                        }
-                    });
-                }
-
-                //Get repository branches list from the github
-                const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
-
-                branches.forEach(async branch => {
-                    //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
-                    if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
-                        console.log(`clonning ${repo} repository`);
-                        child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
-                        child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                        console.log(`${repo} repository cloned`);
-                        if (mode === 'cc' || mode === undefined)
-                            child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
-                    } else {
-                        console.log(`${repository.name}:${branch.name} refreshed`);
-                        //child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
-                        spawn(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, [], options);
-                        if (mode === 'cc' || mode === undefined)
-                            child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
-                    }
-                });
-
-                //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
-                if (mode === 'cc' || mode === undefined) {
-                    codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                        if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
-                            try {
-                                codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
-                                    if (err === null)
-                                        console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
-                                });
-                            } catch (e) {
-                                console.log(e);
-                            }
-                        }
-                    });
-
-                    //Remove deleted branches
-                    codecommit.listBranches({ repositoryName: `${username}_${repo}` }, function (err, data) {
-                        data.branches.forEach(cb => {
-                            if (!(branches.filter(b => b.name === cb).length > 0)) {
-                                codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
-                                    if (err === null)
-                                        console.log(`${cb} branch removed from codecommit.`);
-                                    else
-                                        console.log(err);
-                                });
+                                }
                             }
                         });
+                    }
+
+                    //Get repository branches list from the github
+                    const branches = (await octokit.rest.repos.listBranches({ owner: repository.owner.login, repo: repository.name })).data;
+
+                    branches.forEach(async branch => {
+                        //Check if the local backup is exists. Clone the repository and push content to the codecommit if the local backup doesn't exists
+                        if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`)) {
+                            console.log(`clonning ${repo} repository`);
+                            child_process.execSync(`git clone https://${username}:${config.GITHUB_ACCESS_TOKEN}@github.com/${username}/${repo}.git ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo}`, options);
+                            child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                            console.log(`${repo} repository cloned`);
+                            if (mode === 'cc' || mode === undefined)
+                                child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
+                        } else {
+                            console.log(`${repository.name}:${branch.name} refreshed`);
+                            //child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, options);
+                            spawn(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git fetch && git checkout ${branch.name} && git pull origin ${branch.name}`, [], options);
+                            if (mode === 'cc' || mode === undefined)
+                                child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${repository.owner.login}/${repository.name} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${repository.owner.login}_${repository.name} ${branch.name}`, options);
+                        }
                     });
-                    console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
+
+                    //If the github repository default branch is not the default branch in codecommit. set it to the original default branch.
+                    if (mode === 'cc' || mode === undefined) {
+                        codecommit.getRepository({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                            if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
+                                try {
+                                    codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
+                                        if (err === null)
+                                            console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
+                                    });
+                                } catch (e) {
+                                    console.log(e);
+                                }
+                            }
+                        });
+
+                        //Remove deleted branches
+                        codecommit.listBranches({ repositoryName: `${username}_${repo}` }, function (err, data) {
+                            data.branches.forEach(cb => {
+                                if (!(branches.filter(b => b.name === cb).length > 0)) {
+                                    codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
+                                        if (err === null)
+                                            console.log(`${cb} branch removed from codecommit.`);
+                                        else
+                                            console.log(err);
+                                    });
+                                }
+                            });
+                        });
+                        console.log(`[✓] ${repo} Repository synced to codecommit.\n`);
+                    }
+                    if (mode === 'none')
+                        console.log(`[✓] ${repo} Repository locally synced.\n`);
                 }
-                if (mode === 'none')
-                    console.log(`[✓] ${repo} Repository locally synced.\n`);
-                // if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-                //     console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                //     child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-                // }
             });
             setTimeout(() => {
                 resolve();
@@ -187,32 +185,34 @@ async function localToS3() {
     try {
         await backupProcess();
         repositories.forEach(async repo => {
-            if (repo.size / 1000 < config.REPO_MAX_SIZE) {
-                if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                    if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-                        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                        child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
-                    }
-                    const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+            if (repo.name === 'installers') {
+                if (repo.size / 1000 < config.REPO_MAX_SIZE) {
+                    if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+                        if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
+                            console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+                            child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+                        }
+                        const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                        const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                    const params = {
-                        Bucket: config.AWS_S3_BUCKET_NAME,
-                        Key: repo.full_name + ".zip",
-                        Body: stream,
-                        ContentType: contentType
-                    };
+                        const params = {
+                            Bucket: config.AWS_S3_BUCKET_NAME,
+                            Key: repo.full_name + ".zip",
+                            Body: stream,
+                            ContentType: contentType
+                        };
 
-                    try {
-                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                        console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                    } catch (error) {
-                        console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                        try {
+                            await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                            //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                            console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                        } catch (error) {
+                            console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                        }
                     }
                 }
+                ++count;
             }
-            ++count;
         });
     } catch (e) {
         console.log(e);
@@ -368,12 +368,10 @@ module.exports.init = async (m) => {
     //Initialize aws, codecommit and s3
     if (mode !== 'none') {
         aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
-        if (mode === undefined) {
+        if (mode === 'cc' || mode === undefined)
             codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
-            s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET });
-        } else if (mode === 'cc')
-            codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
-        else if (mode === 's3')
+
+        if (mode === 's3' || mode === undefined)
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
