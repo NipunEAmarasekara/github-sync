@@ -178,8 +178,6 @@ async function localToS3() {
         return new Promise(async (resolve, reject) => {
             await localToCC();
             repositories.forEach(async repo => {
-                if(repo.name === 'central-station')
-                    console.log(repo);
                 if (repoUpdated(repo)) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
                         console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
@@ -292,5 +290,5 @@ async function directGitToS3(repo, index, repositoryCount) {
 }
 
 function repoUpdated(repo) {
-    return (new Date(repo.updated_at) < new Date(new Date().getTime() - 24 * 60 * 60 * 1000)) ? false : true;
+    return (new Date(repo.pushed_at) < new Date(new Date().getTime() - 24 * 60 * 60 * 1000)) ? false : true;
 }
