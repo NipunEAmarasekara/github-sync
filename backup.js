@@ -9,7 +9,7 @@ const Promise = require("bluebird");
 const mime = require('mime-types');
 const { spawn } = require('child_process');
 
-let options = { stdio: 'pipe', shell: true };
+let options = { stdio: 'ignore', shell: true };
 let mode = null;
 let codecommit = null;
 let s3 = null;
@@ -182,36 +182,37 @@ async function backupProcess() {
 async function localToS3() {
     try {
         await backupProcess();
-        if (repo.size / 1000 < config.REPO_MAX_SIZE) {
-            if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
-                if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
-                    console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
-                    child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, { stdio: 'ignore' });
-                }
-                const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+        repositories.forEach(async repo => {
+            if (repo.size / 1000 < config.REPO_MAX_SIZE) {
+                if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
+                    if (!fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`)) {
+                        console.log(`Creating ${repo.full_name}.zip : size - ${repo.size / 1000}`);
+                        child_process.execSync(`zip -r ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip ${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`, options);
+                    }
+                    const stream = fs.createReadStream(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                    const contentType = mime.lookup(`${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
 
-                const params = {
-                    Bucket: config.AWS_S3_BUCKET_NAME,
-                    Key: repo.full_name + ".zip",
-                    Body: stream,
-                    ContentType: contentType
-                };
+                    const params = {
+                        Bucket: config.AWS_S3_BUCKET_NAME,
+                        Key: repo.full_name + ".zip",
+                        Body: stream,
+                        ContentType: contentType
+                    };
 
-                try {
-                    await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
-                    //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
-                    console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
-                } catch (error) {
-                    console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                    try {
+                        await s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 5 }).promise();
+                        //child_process.execSync(`rm ${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, options);
+                        console.log('upload OK', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`);
+                    } catch (error) {
+                        console.log('upload ERROR', `${config.LOCAL_BACKUP_PATH}/repos/${repo.full_name}.zip`, error);
+                    }
                 }
             }
-        }
-        ++count;
-    });
-} catch (e) {
-    console.log(e);
-}
+            ++count;
+        });
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 // async function localToS3(repo, index, repositoryCount) {
@@ -365,7 +366,7 @@ module.exports.init = async (m) => {
         aws.config.credentials = new aws.Credentials(config.AWS_CC_ACCESS_KEY, config.AWS_CC_ACCESS_SECRET);
         if (mode === 'cc' || mode === undefined)
             codecommit = new aws.CodeCommit({ apiVersion: '2015-04-13', region: 'us-east-1' });
-
+        
         if (mode === 's3' || mode === undefined)
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
