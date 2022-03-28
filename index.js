@@ -9,7 +9,7 @@ async function scheduler(mode) {
   // 0 0 * * * = midnight
   cron.schedule('0 0 * * *', async function () {
     console.log(`Schedular started at ${new Date().toLocaleString()}`);
-    backup.writeLog(`Sync log ${(new Date()).toLocaleString()}`);
+    backup.writeLog(`\nSync log ${(new Date()).toLocaleString()}\n`);
     await backup.init(mode);
   });
 }
