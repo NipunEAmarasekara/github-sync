@@ -83,6 +83,7 @@ async function getRepoList() {
 //Github to Codecommit backup process
 async function localToCC() {
     try {
+        return new Promise(async (resolve, reject) => {
             console.log('\n####################### Started Github Backup Process #######################\n');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
@@ -161,6 +162,12 @@ async function localToCC() {
                 if (mode === 'none')
                     console.log(`[✓] ${repo} Repository locally synced.\n`);
             });
+            setTimeout(() => {
+                resolve();
+                ;
+            }, 5000
+            );
+        });
     } catch (e) {
         return e;
     }
@@ -168,7 +175,8 @@ async function localToCC() {
 
 async function localToS3() {
     try {
-            await localToCC().then( result => {
+        return new Promise(async (resolve, reject) => {
+            await localToCC();
             repositories.forEach(async repo => {
                 if (repoUpdated(repo)) {
                     if (fs.existsSync(`${config.LOCAL_BACKUP_PATH}/repos/${repo.owner.login}/${repo.name}`)) {
@@ -197,6 +205,11 @@ async function localToS3() {
                 }
                 ++count;
             });
+            setTimeout(() => {
+                resolve();
+                ;
+            }, 5000
+            );
         });
     } catch (e) {
         console.log(e);
