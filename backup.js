@@ -235,8 +235,7 @@ module.exports.init = async (m) => {
 
     backupProcess().then(result => {
         console.log('\n####################### Completed Github Backup Process #######################\n');
-        clearInterval(interval);
-        return null
+        return null;
     });
 
     // //Wait until the end of the backup process
