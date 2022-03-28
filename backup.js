@@ -87,7 +87,7 @@ async function localToCC() {
     try {
         return new Promise(async (resolve, reject) => {
             console.log('\n####################### Started Github Backup Process #######################\n');
-            writeLog('####################### Started Github Backup Process #######################');
+            writeLog('\n####################### Started Github Backup Process #######################\n');
             repositories = await getRepoList();
             repositories = repositories.sort((a, b) => b.size - a.size);
             repositories.forEach(async (repository, index) => {
@@ -267,7 +267,7 @@ module.exports.init = async (m) => {
 
     backupProcess().then(() => {
         console.log('\n####################### Completed Github Backup Process #######################\n');
-        writeLog('####################### Completed Github Backup Process #######################');
+        writeLog('\n####################### Completed Github Backup Process #######################\n');
         return null;
     });
 };
