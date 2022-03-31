@@ -265,7 +265,12 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    console.log(s3);
+    s3.headBucket({
+        Bucket: config.AWS_S3_BUCKET_NAME
+      }, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(data);           // successful response
+      })
 
     // backupProcess().then(() => {
     //     console.log('\n####################### Completed Github Backup Process #######################\n');
