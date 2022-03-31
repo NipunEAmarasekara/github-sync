@@ -265,11 +265,13 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    backupProcess().then(() => {
-        console.log('\n####################### Completed Github Backup Process #######################\n');
-        writeLog('\n####################### Completed Github Backup Process #######################\n');
-        return null;
-    });
+    console.log(s3);
+
+    // backupProcess().then(() => {
+    //     console.log('\n####################### Completed Github Backup Process #######################\n');
+    //     writeLog('\n####################### Completed Github Backup Process #######################\n');
+    //     return null;
+    // });
 };
 
 function repoUpdated(repo) {
