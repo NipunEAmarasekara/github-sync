@@ -99,12 +99,35 @@ async function localToCC() {
                         if (err) {
                             if (err.code === 'RepositoryDoesNotExistException') {
                                 if (repository.description) {
-                                    if (repository.description != "")
-                                        child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
-                                    else
-                                        child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
-                                } else
-                                    child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
+                                    if (repository.description != "") {
+                                        codecommit.createRepository({ repositoryName: `${username}_${repo}`, repositoryDescription: `${(repository.description) ? repository.description : ''}` }, function (err, data) {
+                                            if (err) {
+                                                console.log(err, err.stack);
+                                                writeLog(`${repository.full_name} repository creattion failed in codecommit.`);
+                                                writeLog(err);
+                                            }
+                                        });
+                                        //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
+                                    } else {
+                                        codecommit.createRepository({ repositoryName: `${username}_${repo}`}, function (err, data) {
+                                            if (err) {
+                                                console.log(err, err.stack);
+                                                writeLog(`${repository.full_name} repository creattion failed in codecommit.`);
+                                                writeLog(err);
+                                            }
+                                        });
+                                        //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
+                                    }
+                                } else {
+                                    //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
+                                    codecommit.createRepository({ repositoryName: `${username}_${repo}`}, function (err, data) {
+                                        if (err) {
+                                            console.log(err, err.stack);
+                                            writeLog(`${repository.full_name} repository creattion failed in codecommit.`);
+                                            writeLog(err);
+                                        }
+                                    });
+                                }
                                 writeLog(`${repository.full_name} repository created in codecommit.`);
                             }
                         }
@@ -116,7 +139,7 @@ async function localToCC() {
 
                 branches.forEach(async branch => {
                     await syncBranchesToLocal(username, repo, branch).then(() => {
-                        if (mode === 'cc' || mode === undefined){
+                        if (mode === 'cc' || mode === undefined) {
                             child_process.execSync(`cd ${config.LOCAL_BACKUP_PATH}/repos/${username}/${repo} && git push ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/${username}_${repo} ${branch.name}`, options);
                             writeLog(`${branch.name} branch synced to codecommit in ${repository.full_name} repository.`);
                         }
@@ -129,7 +152,7 @@ async function localToCC() {
                         if (data.repositoryMetadata.defaultBranch !== repository.default_branch) {
                             try {
                                 codecommit.updateDefaultBranch({ defaultBranchName: repository.default_branch, repositoryName: `${username}_${repo}` }, function (err, data) {
-                                    if (err === null){
+                                    if (err === null) {
                                         console.log(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
                                         writeLog(`Default branch set to ${repository.default_branch} in ${username}_${repo}`);
                                     }
@@ -146,10 +169,10 @@ async function localToCC() {
                         data.branches.forEach(cb => {
                             if (!(branches.filter(b => b.name === cb).length > 0)) {
                                 codecommit.deleteBranch({ branchName: cb, repositoryName: `${username}_${repo}` }, function (err, data) {
-                                    if (err === null){
+                                    if (err === null) {
                                         console.log(`${cb} branch removed from codecommit.`);
                                         writeLog(`${cb} branch removed from codecommit.`);
-                                    }else{
+                                    } else {
                                         console.log(err);
                                         writeLog(err);
                                     }
@@ -162,7 +185,7 @@ async function localToCC() {
                 }
                 if (mode === 'none')
                     console.log(`[✓] ${repo} Repository locally synced.\n`);
-                    writeLog(`[✓] ${repo} Repository locally synced.\n`);
+                writeLog(`[✓] ${repo} Repository locally synced.\n`);
             });
             setTimeout(() => {
                 resolve();
@@ -265,18 +288,11 @@ module.exports.init = async (m) => {
             s3 = new aws.S3({ accessKeyId: config.AWS_CC_ACCESS_KEY, secretAccessKey: config.AWS_CC_ACCESS_SECRET, maxRetries: 2 });
     }
 
-    s3.headBucket({
-        Bucket: config.AWS_S3_BUCKET_NAME
-      }, function(err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else     console.log(data);           // successful response
-      })
-
-    // backupProcess().then(() => {
-    //     console.log('\n####################### Completed Github Backup Process #######################\n');
-    //     writeLog('\n####################### Completed Github Backup Process #######################\n');
-    //     return null;
-    // });
+    backupProcess().then(() => {
+        console.log('\n####################### Completed Github Backup Process #######################\n');
+        writeLog('\n####################### Completed Github Backup Process #######################\n');
+        return null;
+    });
 };
 
 function repoUpdated(repo) {
