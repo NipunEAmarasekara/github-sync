@@ -107,7 +107,6 @@ async function localToCC() {
                                                 writeLog(err);
                                             }
                                         });
-                                        //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo} --repository-description "${(repository.description) ? repository.description : ''}"`, options);
                                     } else {
                                         codecommit.createRepository({ repositoryName: `${username}_${repo}`}, function (err, data) {
                                             if (err) {
@@ -116,10 +115,8 @@ async function localToCC() {
                                                 writeLog(err);
                                             }
                                         });
-                                        //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
                                     }
                                 } else {
-                                    //child_process.execSync(`aws codecommit create-repository --repository-name ${username}_${repo}`, options);
                                     codecommit.createRepository({ repositoryName: `${username}_${repo}`}, function (err, data) {
                                         if (err) {
                                             console.log(err, err.stack);
